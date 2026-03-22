@@ -3,7 +3,41 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Instant SVG Lab</title>
+
+    <title>Free SVG Converter - PNG to SVG Online, Batch Upload & ZIP Download</title>
+
+    <meta
+        name="description"
+        content="Convert PNG, JPG, JPEG, and WEBP images to SVG online for free. Upload multiple files, preview each result, and download individual SVGs or all files as a ZIP."
+    />
+    <meta
+        name="keywords"
+        content="svg converter, png to svg, jpg to svg, image to svg, batch svg converter, free svg converter, online svg converter"
+    />
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="Instant SVG Lab" />
+
+    <!-- Replace with your real domain after connecting custom domain -->
+    <link rel="canonical" href="https://mhjin91-docker.onrender.com/" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Free SVG Converter - PNG to SVG Online" />
+    <meta
+        property="og:description"
+        content="Upload multiple images, preview SVG results, and download polished SVG files individually or as a ZIP."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mhjin91-docker.onrender.com/" />
+    <meta property="og:site_name" content="Instant SVG Lab" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Free SVG Converter - PNG to SVG Online" />
+    <meta
+        name="twitter:description"
+        content="Batch upload images, preview SVG results, and download all files as ZIP."
+    />
+
     <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
@@ -11,8 +45,9 @@
         <header class="hero">
             <div class="hero-text">
                 <p class="badge">Creative Vector Studio</p>
-                <h1>Turn Your Images into Beautiful SVGs</h1>
+                <h1>Free SVG Converter for PNG, JPG, JPEG, and WEBP</h1>
                 <p class="subtitle">
+                    Convert your images into clean SVG files online.
                     Upload multiple images, preview each result in real time,
                     and export polished SVG files one by one or all at once.
                 </p>
@@ -155,6 +190,42 @@
                     </section>
                 </section>
             {% endif %}
+
+            <!-- SEO Content Section -->
+            <section class="card seo-content">
+                <h2>About This Free SVG Converter</h2>
+                <p>
+                    Instant SVG Lab is a free online SVG converter that helps you transform
+                    PNG, JPG, JPEG, and WEBP images into scalable SVG files. You can upload
+                    multiple files at once, preview each SVG result, and download files
+                    individually or as a ZIP archive.
+                </p>
+
+                <h2>Why Use an Online PNG to SVG Converter?</h2>
+                <p>
+                    SVG files are scalable vector graphics, which means they stay sharp at
+                    any size. They are useful for icons, logos, design assets, simple
+                    illustrations, and web graphics. Our batch SVG converter makes it easy
+                    to convert multiple image files in one place without installing extra software.
+                </p>
+
+                <h2>Features</h2>
+                <ul>
+                    <li>Free SVG converter for PNG, JPG, JPEG, and WEBP</li>
+                    <li>Batch upload and conversion workflow</li>
+                    <li>Real-time SVG preview for each converted file</li>
+                    <li>Individual SVG export or ZIP download for all results</li>
+                    <li>Fast browser-based workflow with a clean interface</li>
+                </ul>
+
+                <h2>How to Convert Images to SVG</h2>
+                <ol>
+                    <li>Upload one or more image files.</li>
+                    <li>Generate SVG files from your uploaded images.</li>
+                    <li>Preview each converted SVG in the workspace.</li>
+                    <li>Download individual SVG files or export all as a ZIP.</li>
+                </ol>
+            </section>
         </main>
     </div>
 
@@ -171,7 +242,9 @@
                 return;
             }
 
-            const names = Array.from(files).map(file => `<span class="selected-file-chip">${file.name}</span>`);
+            const names = Array.from(files).map(
+                file => `<span class="selected-file-chip">${file.name}</span>`
+            );
             selectedFiles.innerHTML = names.join("");
         }
 
