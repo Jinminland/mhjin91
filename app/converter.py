@@ -1,18 +1,31 @@
 import os
+import shutil
 import subprocess
 import tempfile
 from PIL import Image
 
-POTRACE_PATH = os.getenv("POTRACE_PATH")
 
-if not POTRACE_PATH:
-    raise ValueError("POTRACE_PATH 환경변수가 설정되지 않았습니다.")
+def get_potrace_path() -> str:
+    potrace_path = os.getenv("POTRACE_PATH")
 
-if not os.path.isfile(POTRACE_PATH):
-    raise FileNotFoundError(f"potrace 실행 파일을 찾을 수 없습니다: {POTRACE_PATH}")
+    if potrace_path:
+        if os.path.isfile(potrace_path):
+            return potrace_path
+        raise FileNotFoundError(f"potrace 실행 파일을 찾을 수 없습니다: {potrace_path}")
+
+    auto_path = shutil.which("potrace")
+    if auto_path:
+        return auto_path
+
+    raise RuntimeError(
+        "potrace를 찾을 수 없습니다. "
+        "POTRACE_PATH 환경변수를 설정하거나, potrace를 설치해야 합니다."
+    )
 
 
 def image_to_svg(file_bytes: bytes, original_filename: str, fill_color: str = "black") -> str:
+    potrace_path = get_potrace_path()
+
     with tempfile.TemporaryDirectory() as temp_dir:
         input_path = os.path.join(temp_dir, original_filename)
         bmp_path = os.path.join(temp_dir, "temp.bmp")
@@ -29,7 +42,7 @@ def image_to_svg(file_bytes: bytes, original_filename: str, fill_color: str = "b
         bmp_img = background.convert("L")
         bmp_img.save(bmp_path)
 
-        cmd = [POTRACE_PATH, bmp_path, "--svg", "-o", output_path]
+        cmd = [potrace_path, bmp_path, "--svg", "-o", output_path]
         subprocess.run(cmd, check=True)
 
         with open(output_path, "r", encoding="utf-8") as f:
