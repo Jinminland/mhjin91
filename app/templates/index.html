@@ -11,29 +11,30 @@
         <header class="hero">
             <div class="hero-text">
                 <p class="badge">Simple SVG Tool</p>
-                <h1>Convert images into clean SVG files</h1>
+                <h1>Convert multiple images into clean SVG files</h1>
                 <p class="subtitle">
-                    Upload PNG, JPG, JPEG, or WEBP and generate SVG output for logos,
-                    illustrations, and simple graphics.
+                    Upload PNG, JPG, JPEG, or WEBP files, choose a fill color,
+                    and convert several images at once.
                 </p>
             </div>
         </header>
 
         <main class="container">
             <section class="card upload-card">
-                <h2>Upload your image</h2>
+                <h2>Upload your images</h2>
                 <p class="section-desc">
-                    Pick a file, choose a fill color, and convert it instantly.
+                    Select one or more files, choose a fill color, and convert them instantly.
                 </p>
 
                 <form action="/convert" method="post" enctype="multipart/form-data" class="form-grid">
                     <div class="form-group">
-                        <label for="file">Image file</label>
+                        <label for="file">Image files</label>
                         <input
                             type="file"
                             id="file"
-                            name="file"
+                            name="files"
                             accept=".png,.jpg,.jpeg,.webp"
+                            multiple
                             required
                         />
                     </div>
@@ -59,16 +60,16 @@
 
             <section class="feature-grid">
                 <div class="card feature-card">
-                    <h3>Easy upload</h3>
-                    <p>Drop in common image formats and convert in one step.</p>
+                    <h3>Multi upload</h3>
+                    <p>Choose several image files and convert them in one go.</p>
                 </div>
                 <div class="card feature-card">
                     <h3>Color control</h3>
-                    <p>Choose the output fill color directly from the page.</p>
+                    <p>Apply one fill color consistently across all converted SVG files.</p>
                 </div>
                 <div class="card feature-card">
                     <h3>Instant download</h3>
-                    <p>Preview the result and save the SVG file right away.</p>
+                    <p>Preview each result and download SVG files one by one.</p>
                 </div>
             </section>
 
@@ -79,23 +80,22 @@
                 </section>
             {% endif %}
 
-            {% if result %}
+            {% if results %}
                 <section class="result-grid">
-                    <div class="card">
-                        <h2>Preview</h2>
-                        <div class="preview-box">
-                            {{ result | safe }}
-                        </div>
-                    </div>
-                </section>
+                    {% for item in results %}
+                        <div class="card">
+                            <h2>{{ item.filename }}</h2>
+                            <div class="preview-box">
+                                {{ item.svg | safe }}
+                            </div>
 
-                <section class="card download-card">
-                    <h2>Download your file</h2>
-                    <p class="section-desc">Save the converted SVG to your computer.</p>
-                    <form action="/download-svg" method="post">
-                        <input type="hidden" name="svg_text" value="{{ result | e }}">
-                        <button type="submit">Download SVG</button>
-                    </form>
+                            <form action="/download-svg" method="post" style="margin-top: 16px;">
+                                <input type="hidden" name="svg_text" value="{{ item.svg | e }}">
+                                <input type="hidden" name="filename" value="{{ item.svg_filename }}">
+                                <button type="submit">Download SVG</button>
+                            </form>
+                        </div>
+                    {% endfor %}
                 </section>
             {% endif %}
         </main>

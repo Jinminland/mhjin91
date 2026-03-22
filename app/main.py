@@ -12,58 +12,67 @@ templates = Jinja2Templates(directory="app/templates")
 
 
 @app.get("/", response_class=HTMLResponse)
-def home(request: Request):
+async def home(request: Request):
     return templates.TemplateResponse(
-        request=request,
-        name="index.html",
-        context={
-            "result": None,
-            "error": None,
+        "index.html",
+        {
+            "request": request,
+            "results": None,
             "fill_color": "#000000",
-        }
+            "error": None,
+        },
     )
 
 
 @app.post("/convert", response_class=HTMLResponse)
-async def convert(
-        request: Request,
-        file: UploadFile = File(...),
-        fill_color: str = Form("#000000")
+async def convert_images(
+    request: Request,
+    files: list[UploadFile] = File(...),
+    fill_color: str = Form("#000000"),
 ):
+    results = []
+    error = None
+
     try:
-        file_bytes = await file.read()
+        for file in files:
+            if not file.filename:
+                continue
 
-        svg_result = image_to_svg(
-            file_bytes=file_bytes,
-            original_filename=file.filename,
-            fill_color=fill_color
-        )
+            file_bytes = await file.read()
+            svg_result = image_to_svg(file_bytes, file.filename, fill_color)
 
-        return templates.TemplateResponse(
-            request=request,
-            name="index.html",
-            context={
-                "result": svg_result,
-                "error": None,
-                "fill_color": fill_color,
-            }
-        )
+            base_name = file.filename.rsplit(".", 1)[0]
+            svg_filename = f"{base_name}.svg"
+
+            results.append(
+                {
+                    "filename": file.filename,
+                    "svg_filename": svg_filename,
+                    "svg": svg_result,
+                }
+            )
+
     except Exception as e:
-        return templates.TemplateResponse(
-            request=request,
-            name="index.html",
-            context={
-                "result": None,
-                "error": str(e),
-                "fill_color": fill_color,
-            }
-        )
+        error = str(e)
+
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "results": results,
+            "fill_color": fill_color,
+            "error": error,
+        },
+    )
 
 
 @app.post("/download-svg")
-async def download_svg(svg_text: str = Form(...)):
+async def download_svg(
+    svg_text: str = Form(...),
+    filename: str = Form("converted.svg"),
+):
     return Response(
         content=svg_text,
         media_type="image/svg+xml",
-        headers={"Content-Disposition": "attachment; filename=converted.svg"}
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
