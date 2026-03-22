@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://https://mhjin91-docker.onrender.com/sitemap.xml
+Sitemap: https://mhjin91-docker.onrender.com/sitemap.xml
