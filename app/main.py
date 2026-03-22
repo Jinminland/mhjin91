@@ -17,12 +17,12 @@ templates = Jinja2Templates(directory="app/templates")
 
 @app.get("/robots.txt", include_in_schema=False)
 async def robots_txt():
-    return FileResponse("app/static/robots.txt", media_type="text/plain")
+    return FileResponse(path="app/static/robots.txt", media_type="text/plain")
 
 
 @app.get("/sitemap.xml", include_in_schema=False)
 async def sitemap_xml():
-    return FileResponse("app/static/sitemap.xml", media_type="application/xml")
+    return FileResponse(path="app/static/sitemap.xml", media_type="application/xml")
 
 
 @app.get("/", response_class=HTMLResponse)
