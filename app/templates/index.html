@@ -54,8 +54,8 @@
                     <p>Try a few colors instantly before downloading your SVG files.</p>
                 </div>
                 <div class="card feature-card">
-                    <h3>Instant download</h3>
-                    <p>Preview each result and download the original black SVG one by one.</p>
+                    <h3>Flexible download</h3>
+                    <p>Download files one by one or get everything at once as a ZIP.</p>
                 </div>
             </section>
 
@@ -95,6 +95,22 @@
                             </form>
                         </div>
                     {% endfor %}
+                </section>
+
+                <section class="card download-card">
+                    <h2>Download everything</h2>
+                    <p class="section-desc">
+                        Get all converted SVG files at once in a ZIP file.
+                    </p>
+
+                    <form action="/download-all" method="post">
+                        <input
+                            type="hidden"
+                            name="results_json"
+                            value='{{ results | tojson | safe }}'
+                        >
+                        <button type="submit">Download All as ZIP</button>
+                    </form>
                 </section>
             {% endif %}
         </main>

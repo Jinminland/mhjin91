@@ -1,3 +1,7 @@
+import io
+import json
+import zipfile
+
 from fastapi import FastAPI, Request, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -18,7 +22,6 @@ async def home(request: Request):
         {
             "request": request,
             "results": None,
-            "fill_color": "#000000",
             "error": None,
         },
     )
@@ -28,7 +31,6 @@ async def home(request: Request):
 async def convert_images(
     request: Request,
     files: list[UploadFile] = File(...),
-    fill_color: str = Form("#000000"),
 ):
     results = []
     error = None
@@ -39,7 +41,7 @@ async def convert_images(
                 continue
 
             file_bytes = await file.read()
-            svg_result = image_to_svg(file_bytes, file.filename, fill_color)
+            svg_result = image_to_svg(file_bytes, file.filename)
 
             base_name = file.filename.rsplit(".", 1)[0]
             svg_filename = f"{base_name}.svg"
@@ -60,7 +62,6 @@ async def convert_images(
         {
             "request": request,
             "results": results,
-            "fill_color": fill_color,
             "error": error,
         },
     )
@@ -75,4 +76,27 @@ async def download_svg(
         content=svg_text,
         media_type="image/svg+xml",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@app.post("/download-all")
+async def download_all_svgs(
+    results_json: str = Form(...),
+):
+    results = json.loads(results_json)
+
+    zip_buffer = io.BytesIO()
+
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        for item in results:
+            svg_filename = item["svg_filename"]
+            svg_text = item["svg"]
+            zip_file.writestr(svg_filename, svg_text)
+
+    zip_buffer.seek(0)
+
+    return Response(
+        content=zip_buffer.getvalue(),
+        media_type="application/zip",
+        headers={"Content-Disposition": 'attachment; filename="converted_svgs.zip"'},
     )
