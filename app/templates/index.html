@@ -3,27 +3,27 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Image to SVG Converter</title>
+    <title>Instant SVG Lab</title>
     <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
     <div class="page">
         <header class="hero">
             <div class="hero-text">
-                <p class="badge">SVG Converter</p>
-                <h1>Convert multiple images into clean SVG files</h1>
+                <p class="badge">Creative Vector Studio</p>
+                <h1>Turn Your Images into Beautiful SVGs</h1>
                 <p class="subtitle">
-                    Upload several PNG, JPG, JPEG, or WEBP files at once, preview each result,
-                    and download them individually or as one ZIP.
+                    Upload multiple images, preview each result in real time,
+                    and export polished SVG files one by one or all at once.
                 </p>
             </div>
         </header>
 
         <main class="container">
             <section class="card upload-card">
-                <h2>Upload your images</h2>
+                <h2>Drop Your Files</h2>
                 <p class="section-desc">
-                    Drag and drop files into the box below or click to browse.
+                    Drag, drop, and convert your artwork in just a few clicks.
                 </p>
 
                 <form action="/convert" method="post" enctype="multipart/form-data" class="form-grid">
@@ -40,10 +40,10 @@
                                 required
                             />
                             <div class="drop-zone-content">
-                                <div class="upload-icon">↑</div>
-                                <p class="drop-title">Drag &amp; drop your files here</p>
-                                <p class="drop-subtitle">or click to choose multiple images</p>
-                                <p class="drop-types">PNG, JPG, JPEG, WEBP</p>
+                                <div class="upload-icon">✦</div>
+                                <p class="drop-title">Drop your images here</p>
+                                <p class="drop-subtitle">or tap to browse your files</p>
+                                <p class="drop-types">Supports PNG, JPG, JPEG, WEBP</p>
                             </div>
                         </div>
 
@@ -51,23 +51,23 @@
                     </div>
 
                     <div class="form-actions">
-                        <button type="submit">Convert to SVG</button>
+                        <button type="submit">Generate SVG Files</button>
                     </div>
                 </form>
             </section>
 
             <section class="feature-grid">
                 <div class="card feature-card">
-                    <h3>Multi upload</h3>
-                    <p>Upload several images and convert them together.</p>
+                    <h3>✦ Batch Upload</h3>
+                    <p>Import multiple images and process them in one smooth flow.</p>
                 </div>
                 <div class="card feature-card">
-                    <h3>Focused preview</h3>
-                    <p>Preview only the file you choose instead of showing everything at once.</p>
+                    <h3>✦ Smart Preview</h3>
+                    <p>Focus on one file at a time and test colors before export.</p>
                 </div>
                 <div class="card feature-card">
-                    <h3>Flexible download</h3>
-                    <p>Download one SVG at a time or get everything in a ZIP file.</p>
+                    <h3>✦ Instant Export</h3>
+                    <p>Download a single SVG or export the whole set as a ZIP.</p>
                 </div>
             </section>
 
@@ -83,8 +83,8 @@
                     <section class="card files-card">
                         <div class="files-card-header">
                             <div>
-                                <h2>Converted files</h2>
-                                <p class="section-desc">{{ results|length }} file(s) ready</p>
+                                <h2>Your SVG Collection</h2>
+                                <p class="section-desc">{{ results|length }} file(s) ready to preview and export</p>
                             </div>
 
                             <form action="/download-all" method="post" class="download-all-form">
@@ -93,7 +93,7 @@
                                     name="results_json"
                                     value='{{ results | tojson | safe }}'
                                 >
-                                <button type="submit" class="secondary-btn">Download All ZIP</button>
+                                <button type="submit" class="secondary-btn">🗂 Export All as ZIP</button>
                             </form>
                         </div>
 
@@ -112,12 +112,12 @@
                                     </div>
 
                                     <div class="file-row-actions">
-                                        <button type="button" class="preview-btn">Preview</button>
+                                        <button type="button" class="preview-btn">Open Preview</button>
 
                                         <form action="/download-svg" method="post">
                                             <input type="hidden" name="svg_text" value="{{ item.svg | e }}">
                                             <input type="hidden" name="filename" value="{{ item.svg_filename }}">
-                                            <button type="submit" class="download-btn">Download</button>
+                                            <button type="submit" class="download-btn">⬇ Export SVG</button>
                                         </form>
                                     </div>
                                 </div>
@@ -132,17 +132,17 @@
                                     {% if results and results[0] %}{{ results[0].filename }}{% endif %}
                                 </h2>
                                 <p class="section-desc">
-                                    Preview colors are for testing only. Download stays black.
+                                    Preview colors are for exploration only. Export files remain in the original black SVG style.
                                 </p>
                             </div>
                         </div>
 
                         <div class="color-picker-row">
                             <button type="button" class="color-btn active" data-color="#000000">Black</button>
-                            <button type="button" class="color-btn" data-color="#ff0000">Red</button>
-                            <button type="button" class="color-btn" data-color="#0000ff">Blue</button>
-                            <button type="button" class="color-btn" data-color="#008000">Green</button>
-                            <button type="button" class="color-btn" data-color="#ffd700">Yellow</button>
+                            <button type="button" class="color-btn" data-color="#ff4d6d">Rose</button>
+                            <button type="button" class="color-btn" data-color="#4f46e5">Indigo</button>
+                            <button type="button" class="color-btn" data-color="#0f9d58">Green</button>
+                            <button type="button" class="color-btn" data-color="#f4b400">Gold</button>
                         </div>
 
                         <div class="preview-stage">
