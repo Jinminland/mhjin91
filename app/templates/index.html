@@ -12,7 +12,7 @@
     />
 
     <meta name="google-site-verification" content="MCMoPsZcdjI5p8TRrPu8M5DkpinFjhqjNjQ85RC3idc" />
-    
+
     <meta
         name="keywords"
         content="svg converter, png to svg, jpg to svg, image to svg, batch svg converter, free svg converter, online svg converter"
@@ -20,10 +20,8 @@
     <meta name="robots" content="index, follow" />
     <meta name="author" content="Instant SVG Lab" />
 
-    <!-- Replace with your real domain after connecting custom domain -->
     <link rel="canonical" href="https://mhjin91-docker.onrender.com/" />
 
-    <!-- Open Graph -->
     <meta property="og:title" content="Free SVG Converter - PNG to SVG Online" />
     <meta
         property="og:description"
@@ -33,7 +31,6 @@
     <meta property="og:url" content="https://mhjin91-docker.onrender.com/" />
     <meta property="og:site_name" content="Instant SVG Lab" />
 
-    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Free SVG Converter - PNG to SVG Online" />
     <meta
@@ -46,27 +43,40 @@
 <body>
     <div class="page">
         <header class="hero">
-            <div class="hero-text">
-                <p class="badge">Creative Vector Studio</p>
-                <h1>Free SVG Converter for PNG, JPG, JPEG, and WEBP</h1>
-                <p class="subtitle">
-                    Convert your images into clean SVG files online.
-                    Upload multiple images, preview each result in real time,
-                    and export polished SVG files one by one or all at once.
-                </p>
+            <div class="hero-topbar">
+                <div class="hero-text">
+                    <p class="badge" data-i18n="badge">Creative Vector Studio</p>
+                    <h1 data-i18n="hero_title">Free SVG Converter for PNG, JPG, JPEG, and WEBP</h1>
+                    <p class="subtitle" data-i18n="hero_subtitle">
+                        Convert your images into clean SVG files online.
+                        Upload multiple images, preview each result in real time,
+                        and export polished SVG files one by one or all at once.
+                    </p>
+                </div>
+
+                <div class="language-switcher">
+                    <label for="language-select" data-i18n="language_label">Language</label>
+                    <select id="language-select" aria-label="Language selector">
+                        <option value="en">English</option>
+                        <option value="ko">한국어</option>
+                        <option value="ja">日本語</option>
+                        <option value="zh">中文</option>
+                        <option value="fr">Français</option>
+                    </select>
+                </div>
             </div>
         </header>
 
         <main class="container">
             <section class="card upload-card">
-                <h2>Drop Your Files</h2>
-                <p class="section-desc">
+                <h2 data-i18n="upload_title">Drop Your Files</h2>
+                <p class="section-desc" data-i18n="upload_desc">
                     Drag, drop, and convert your artwork in just a few clicks.
                 </p>
 
                 <form action="/convert" method="post" enctype="multipart/form-data" class="form-grid">
                     <div class="form-group">
-                        <label for="file">Image files</label>
+                        <label for="file" data-i18n="image_files_label">Image files</label>
 
                         <div class="drop-zone" id="drop-zone">
                             <input
@@ -79,9 +89,9 @@
                             />
                             <div class="drop-zone-content">
                                 <div class="upload-icon">✦</div>
-                                <p class="drop-title">Drop your images here</p>
-                                <p class="drop-subtitle">or tap to browse your files</p>
-                                <p class="drop-types">Supports PNG, JPG, JPEG, WEBP</p>
+                                <p class="drop-title" data-i18n="drop_title">Drop your images here</p>
+                                <p class="drop-subtitle" data-i18n="drop_subtitle">or tap to browse your files</p>
+                                <p class="drop-types" data-i18n="drop_types">Supports PNG, JPG, JPEG, WEBP</p>
                             </div>
                         </div>
 
@@ -89,29 +99,29 @@
                     </div>
 
                     <div class="form-actions">
-                        <button type="submit">Generate SVG Files</button>
+                        <button type="submit" data-i18n="generate_button">Generate SVG Files</button>
                     </div>
                 </form>
             </section>
 
             <section class="feature-grid">
                 <div class="card feature-card">
-                    <h3>✦ Batch Upload</h3>
-                    <p>Import multiple images and process them in one smooth flow.</p>
+                    <h3 data-i18n="feature1_title">✦ Batch Upload</h3>
+                    <p data-i18n="feature1_desc">Import multiple images and process them in one smooth flow.</p>
                 </div>
                 <div class="card feature-card">
-                    <h3>✦ Smart Preview</h3>
-                    <p>Focus on one file at a time and test colors before export.</p>
+                    <h3 data-i18n="feature2_title">✦ Smart Preview</h3>
+                    <p data-i18n="feature2_desc">Focus on one file at a time and test colors before export.</p>
                 </div>
                 <div class="card feature-card">
-                    <h3>✦ Instant Export</h3>
-                    <p>Download a single SVG or export the whole set as a ZIP.</p>
+                    <h3 data-i18n="feature3_title">✦ Instant Export</h3>
+                    <p data-i18n="feature3_desc">Download a single SVG or export the whole set as a ZIP.</p>
                 </div>
             </section>
 
             {% if error %}
                 <section class="card error-box">
-                    <h2>Error</h2>
+                    <h2 data-i18n="error_title">Error</h2>
                     <p>{{ error }}</p>
                 </section>
             {% endif %}
@@ -121,8 +131,14 @@
                     <section class="card files-card">
                         <div class="files-card-header">
                             <div>
-                                <h2>Your SVG Collection</h2>
-                                <p class="section-desc">{{ results|length }} file(s) ready to preview and export</p>
+                                <h2 data-i18n="collection_title">Your SVG Collection</h2>
+                                <p
+                                    class="section-desc"
+                                    data-i18n="collection_desc"
+                                    data-count="{{ results|length }}"
+                                >
+                                    {{ results|length }} file(s) ready to preview and export
+                                </p>
                             </div>
 
                             <form action="/download-all" method="post" class="download-all-form">
@@ -131,7 +147,9 @@
                                     name="results_json"
                                     value='{{ results | tojson | safe }}'
                                 >
-                                <button type="submit" class="secondary-btn">🗂 Export All as ZIP</button>
+                                <button type="submit" class="secondary-btn" data-i18n="export_all_zip">
+                                    🗂 Export All as ZIP
+                                </button>
                             </form>
                         </div>
 
@@ -145,17 +163,17 @@
                                         <div class="file-dot"></div>
                                         <div class="file-meta">
                                             <p class="file-name">{{ item.filename }}</p>
-                                            <p class="file-type">SVG ready</p>
+                                            <p class="file-type" data-i18n="svg_ready">SVG ready</p>
                                         </div>
                                     </div>
 
                                     <div class="file-row-actions">
-                                        <button type="button" class="preview-btn">Open Preview</button>
+                                        <button type="button" class="preview-btn" data-i18n="open_preview">Open Preview</button>
 
                                         <form action="/download-svg" method="post">
                                             <input type="hidden" name="svg_text" value="{{ item.svg | e }}">
                                             <input type="hidden" name="filename" value="{{ item.svg_filename }}">
-                                            <button type="submit" class="download-btn">⬇ Export SVG</button>
+                                            <button type="submit" class="download-btn" data-i18n="export_svg">⬇ Export SVG</button>
                                         </form>
                                     </div>
                                 </div>
@@ -169,18 +187,18 @@
                                 <h2 id="preview-file-name">
                                     {% if results and results[0] %}{{ results[0].filename }}{% endif %}
                                 </h2>
-                                <p class="section-desc">
+                                <p class="section-desc" data-i18n="preview_desc">
                                     Preview colors are for exploration only. Export files remain in the original black SVG style.
                                 </p>
                             </div>
                         </div>
 
                         <div class="color-picker-row">
-                            <button type="button" class="color-btn active" data-color="#000000">Black</button>
-                            <button type="button" class="color-btn" data-color="#ff4d6d">Rose</button>
-                            <button type="button" class="color-btn" data-color="#4f46e5">Indigo</button>
-                            <button type="button" class="color-btn" data-color="#0f9d58">Green</button>
-                            <button type="button" class="color-btn" data-color="#f4b400">Gold</button>
+                            <button type="button" class="color-btn active" data-color="#000000" data-i18n="color_black">Black</button>
+                            <button type="button" class="color-btn" data-color="#ff4d6d" data-i18n="color_rose">Rose</button>
+                            <button type="button" class="color-btn" data-color="#4f46e5" data-i18n="color_indigo">Indigo</button>
+                            <button type="button" class="color-btn" data-color="#0f9d58" data-i18n="color_green">Green</button>
+                            <button type="button" class="color-btn" data-color="#f4b400" data-i18n="color_gold">Gold</button>
                         </div>
 
                         <div class="preview-stage">
@@ -194,48 +212,290 @@
                 </section>
             {% endif %}
 
-            <!-- SEO Content Section -->
             <section class="card seo-content">
-                <h2>About This Free SVG Converter</h2>
-                <p>
+                <h2 data-i18n="seo_about_title">About This Free SVG Converter</h2>
+                <p data-i18n="seo_about_desc">
                     Instant SVG Lab is a free online SVG converter that helps you transform
                     PNG, JPG, JPEG, and WEBP images into scalable SVG files. You can upload
                     multiple files at once, preview each SVG result, and download files
                     individually or as a ZIP archive.
                 </p>
 
-                <h2>Why Use an Online PNG to SVG Converter?</h2>
-                <p>
+                <h2 data-i18n="seo_why_title">Why Use an Online PNG to SVG Converter?</h2>
+                <p data-i18n="seo_why_desc">
                     SVG files are scalable vector graphics, which means they stay sharp at
                     any size. They are useful for icons, logos, design assets, simple
                     illustrations, and web graphics. Our batch SVG converter makes it easy
                     to convert multiple image files in one place without installing extra software.
                 </p>
 
-                <h2>Features</h2>
+                <h2 data-i18n="seo_features_title">Features</h2>
                 <ul>
-                    <li>Free SVG converter for PNG, JPG, JPEG, and WEBP</li>
-                    <li>Batch upload and conversion workflow</li>
-                    <li>Real-time SVG preview for each converted file</li>
-                    <li>Individual SVG export or ZIP download for all results</li>
-                    <li>Fast browser-based workflow with a clean interface</li>
+                    <li data-i18n="seo_feature_1">Free SVG converter for PNG, JPG, JPEG, and WEBP</li>
+                    <li data-i18n="seo_feature_2">Batch upload and conversion workflow</li>
+                    <li data-i18n="seo_feature_3">Real-time SVG preview for each converted file</li>
+                    <li data-i18n="seo_feature_4">Individual SVG export or ZIP download for all results</li>
+                    <li data-i18n="seo_feature_5">Fast browser-based workflow with a clean interface</li>
                 </ul>
 
-                <h2>How to Convert Images to SVG</h2>
+                <h2 data-i18n="seo_how_title">How to Convert Images to SVG</h2>
                 <ol>
-                    <li>Upload one or more image files.</li>
-                    <li>Generate SVG files from your uploaded images.</li>
-                    <li>Preview each converted SVG in the workspace.</li>
-                    <li>Download individual SVG files or export all as a ZIP.</li>
+                    <li data-i18n="seo_step_1">Upload one or more image files.</li>
+                    <li data-i18n="seo_step_2">Generate SVG files from your uploaded images.</li>
+                    <li data-i18n="seo_step_3">Preview each converted SVG in the workspace.</li>
+                    <li data-i18n="seo_step_4">Download individual SVG files or export all as a ZIP.</li>
                 </ol>
             </section>
         </main>
     </div>
 
     <script>
+        const translations = {
+            en: {
+                page_lang: "en",
+                badge: "Creative Vector Studio",
+                language_label: "Language",
+                hero_title: "Free SVG Converter for PNG, JPG, JPEG, and WEBP",
+                hero_subtitle: "Convert your images into clean SVG files online. Upload multiple images, preview each result in real time, and export polished SVG files one by one or all at once.",
+                upload_title: "Drop Your Files",
+                upload_desc: "Drag, drop, and convert your artwork in just a few clicks.",
+                image_files_label: "Image files",
+                drop_title: "Drop your images here",
+                drop_subtitle: "or tap to browse your files",
+                drop_types: "Supports PNG, JPG, JPEG, WEBP",
+                generate_button: "Generate SVG Files",
+                feature1_title: "✦ Batch Upload",
+                feature1_desc: "Import multiple images and process them in one smooth flow.",
+                feature2_title: "✦ Smart Preview",
+                feature2_desc: "Focus on one file at a time and test colors before export.",
+                feature3_title: "✦ Instant Export",
+                feature3_desc: "Download a single SVG or export the whole set as a ZIP.",
+                error_title: "Error",
+                collection_title: "Your SVG Collection",
+                collection_desc: "{count} file(s) ready to preview and export",
+                export_all_zip: "🗂 Export All as ZIP",
+                svg_ready: "SVG ready",
+                open_preview: "Open Preview",
+                export_svg: "⬇ Export SVG",
+                preview_desc: "Preview colors are for exploration only. Export files remain in the original black SVG style.",
+                color_black: "Black",
+                color_rose: "Rose",
+                color_indigo: "Indigo",
+                color_green: "Green",
+                color_gold: "Gold",
+                seo_about_title: "About This Free SVG Converter",
+                seo_about_desc: "Instant SVG Lab is a free online SVG converter that helps you transform PNG, JPG, JPEG, and WEBP images into scalable SVG files. You can upload multiple files at once, preview each SVG result, and download files individually or as a ZIP archive.",
+                seo_why_title: "Why Use an Online PNG to SVG Converter?",
+                seo_why_desc: "SVG files are scalable vector graphics, which means they stay sharp at any size. They are useful for icons, logos, design assets, simple illustrations, and web graphics. Our batch SVG converter makes it easy to convert multiple image files in one place without installing extra software.",
+                seo_features_title: "Features",
+                seo_feature_1: "Free SVG converter for PNG, JPG, JPEG, and WEBP",
+                seo_feature_2: "Batch upload and conversion workflow",
+                seo_feature_3: "Real-time SVG preview for each converted file",
+                seo_feature_4: "Individual SVG export or ZIP download for all results",
+                seo_feature_5: "Fast browser-based workflow with a clean interface",
+                seo_how_title: "How to Convert Images to SVG",
+                seo_step_1: "Upload one or more image files.",
+                seo_step_2: "Generate SVG files from your uploaded images.",
+                seo_step_3: "Preview each converted SVG in the workspace.",
+                seo_step_4: "Download individual SVG files or export all as a ZIP."
+            },
+            ko: {
+                page_lang: "ko",
+                badge: "크리에이티브 벡터 스튜디오",
+                language_label: "언어",
+                hero_title: "PNG, JPG, JPEG, WEBP용 무료 SVG 변환기",
+                hero_subtitle: "이미지를 깔끔한 SVG 파일로 온라인에서 변환하세요. 여러 이미지를 업로드하고, 결과를 실시간으로 미리보며, SVG 파일을 개별 또는 한 번에 내보낼 수 있습니다.",
+                upload_title: "파일 업로드",
+                upload_desc: "드래그 앤 드롭으로 이미지를 빠르게 변환해보세요.",
+                image_files_label: "이미지 파일",
+                drop_title: "이미지를 여기에 놓으세요",
+                drop_subtitle: "또는 클릭해서 파일을 선택하세요",
+                drop_types: "PNG, JPG, JPEG, WEBP 지원",
+                generate_button: "SVG 파일 생성",
+                feature1_title: "✦ 다중 업로드",
+                feature1_desc: "여러 이미지를 한 번에 업로드하고 부드럽게 처리할 수 있습니다.",
+                feature2_title: "✦ 스마트 미리보기",
+                feature2_desc: "파일별로 집중해서 보고, 내보내기 전에 색상을 테스트할 수 있습니다.",
+                feature3_title: "✦ 즉시 다운로드",
+                feature3_desc: "SVG 하나만 받거나 전체를 ZIP으로 한 번에 내보낼 수 있습니다.",
+                error_title: "오류",
+                collection_title: "SVG 컬렉션",
+                collection_desc: "미리보기와 내보내기가 가능한 파일 {count}개",
+                export_all_zip: "🗂 전체 ZIP으로 내보내기",
+                svg_ready: "SVG 준비 완료",
+                open_preview: "미리보기 열기",
+                export_svg: "⬇ SVG 내보내기",
+                preview_desc: "미리보기 색상은 테스트용입니다. 다운로드되는 파일은 원래의 검은색 SVG 스타일을 유지합니다.",
+                color_black: "검정",
+                color_rose: "로즈",
+                color_indigo: "인디고",
+                color_green: "초록",
+                color_gold: "골드",
+                seo_about_title: "이 무료 SVG 변환기에 대해",
+                seo_about_desc: "Instant SVG Lab은 PNG, JPG, JPEG, WEBP 이미지를 확장 가능한 SVG 파일로 변환할 수 있는 무료 온라인 SVG 변환기입니다. 여러 파일을 한 번에 업로드하고, 각 SVG 결과를 미리본 뒤, 개별 파일 또는 ZIP으로 다운로드할 수 있습니다.",
+                seo_why_title: "온라인 PNG to SVG 변환기를 사용하는 이유",
+                seo_why_desc: "SVG는 크기를 바꿔도 선명함이 유지되는 벡터 그래픽 형식입니다. 아이콘, 로고, 디자인 에셋, 간단한 일러스트, 웹 그래픽에 유용합니다. 이 배치 SVG 변환기는 별도 소프트웨어 없이 여러 이미지를 한 곳에서 쉽게 변환할 수 있게 도와줍니다.",
+                seo_features_title: "기능",
+                seo_feature_1: "PNG, JPG, JPEG, WEBP용 무료 SVG 변환기",
+                seo_feature_2: "다중 업로드 및 변환 워크플로우",
+                seo_feature_3: "각 변환 파일의 실시간 SVG 미리보기",
+                seo_feature_4: "개별 SVG 다운로드 또는 전체 ZIP 다운로드",
+                seo_feature_5: "깔끔한 인터페이스의 빠른 브라우저 기반 워크플로우",
+                seo_how_title: "이미지를 SVG로 변환하는 방법",
+                seo_step_1: "하나 이상의 이미지 파일을 업로드하세요.",
+                seo_step_2: "업로드한 이미지로 SVG 파일을 생성하세요.",
+                seo_step_3: "작업 영역에서 각 SVG를 미리보세요.",
+                seo_step_4: "개별 SVG 파일 또는 전체 ZIP을 다운로드하세요."
+            },
+            ja: {
+                page_lang: "ja",
+                badge: "クリエイティブ・ベクタースタジオ",
+                language_label: "言語",
+                hero_title: "PNG・JPG・JPEG・WEBP対応の無料SVG変換ツール",
+                hero_subtitle: "画像をきれいなSVGファイルにオンラインで変換できます。複数の画像をアップロードし、結果をリアルタイムでプレビューし、SVGを個別またはまとめて書き出せます。",
+                upload_title: "ファイルをアップロード",
+                upload_desc: "ドラッグ＆ドロップで作品を数クリックで変換できます。",
+                image_files_label: "画像ファイル",
+                drop_title: "ここに画像をドロップ",
+                drop_subtitle: "またはクリックしてファイルを選択",
+                drop_types: "PNG、JPG、JPEG、WEBP対応",
+                generate_button: "SVGファイルを生成",
+                feature1_title: "✦ 一括アップロード",
+                feature1_desc: "複数の画像をまとめて取り込み、スムーズに処理できます。",
+                feature2_title: "✦ スマートプレビュー",
+                feature2_desc: "1ファイルずつ確認しながら、書き出し前に色を試せます。",
+                feature3_title: "✦ すぐに書き出し",
+                feature3_desc: "単体のSVGまたはまとめてZIPでダウンロードできます。",
+                error_title: "エラー",
+                collection_title: "SVGコレクション",
+                collection_desc: "プレビューと書き出しの準備ができたファイル数: {count}",
+                export_all_zip: "🗂 すべてZIPで書き出し",
+                svg_ready: "SVG準備完了",
+                open_preview: "プレビューを開く",
+                export_svg: "⬇ SVGを書き出し",
+                preview_desc: "プレビューの色は確認用です。ダウンロードされるファイルは元の黒いSVGスタイルのままです。",
+                color_black: "ブラック",
+                color_rose: "ローズ",
+                color_indigo: "インディゴ",
+                color_green: "グリーン",
+                color_gold: "ゴールド",
+                seo_about_title: "この無料SVG変換ツールについて",
+                seo_about_desc: "Instant SVG Lab は、PNG、JPG、JPEG、WEBP画像を拡大縮小可能なSVGファイルに変換できる無料のオンラインSVGコンバーターです。複数ファイルを一度にアップロードし、各SVG結果をプレビューして、個別またはZIPでダウンロードできます。",
+                seo_why_title: "オンラインPNG→SVG変換ツールを使う理由",
+                seo_why_desc: "SVGは拡大・縮小しても鮮明さを保てるベクター画像形式です。アイコン、ロゴ、デザイン素材、シンプルなイラスト、Webグラフィックに適しています。この一括SVG変換ツールなら、追加ソフトなしで複数画像を簡単に変換できます。",
+                seo_features_title: "特長",
+                seo_feature_1: "PNG、JPG、JPEG、WEBP対応の無料SVG変換ツール",
+                seo_feature_2: "一括アップロードと変換ワークフロー",
+                seo_feature_3: "各変換ファイルのリアルタイムSVGプレビュー",
+                seo_feature_4: "個別SVGダウンロードまたは全体ZIPダウンロード",
+                seo_feature_5: "すっきりしたUIの高速ブラウザワークフロー",
+                seo_how_title: "画像をSVGに変換する方法",
+                seo_step_1: "1つ以上の画像ファイルをアップロードします。",
+                seo_step_2: "アップロードした画像からSVGファイルを生成します。",
+                seo_step_3: "ワークスペースで各SVGをプレビューします。",
+                seo_step_4: "個別のSVGまたはZIP全体をダウンロードします。"
+            },
+            zh: {
+                page_lang: "zh",
+                badge: "创意矢量工作室",
+                language_label: "语言",
+                hero_title: "适用于 PNG、JPG、JPEG 和 WEBP 的免费 SVG 转换器",
+                hero_subtitle: "在线将图片转换为干净清晰的 SVG 文件。上传多张图片，实时预览结果，并可单独或批量导出 SVG 文件。",
+                upload_title: "上传文件",
+                upload_desc: "拖放图片，几步即可完成转换。",
+                image_files_label: "图片文件",
+                drop_title: "将图片拖放到这里",
+                drop_subtitle: "或点击浏览并选择文件",
+                drop_types: "支持 PNG、JPG、JPEG、WEBP",
+                generate_button: "生成 SVG 文件",
+                feature1_title: "✦ 批量上传",
+                feature1_desc: "一次导入多张图片，并流畅完成处理。",
+                feature2_title: "✦ 智能预览",
+                feature2_desc: "逐个查看文件，并在导出前测试颜色效果。",
+                feature3_title: "✦ 即时导出",
+                feature3_desc: "可下载单个 SVG，或将全部结果打包为 ZIP。",
+                error_title: "错误",
+                collection_title: "你的 SVG 文件集合",
+                collection_desc: "共有 {count} 个文件可预览并导出",
+                export_all_zip: "🗂 全部导出为 ZIP",
+                svg_ready: "SVG 已就绪",
+                open_preview: "打开预览",
+                export_svg: "⬇ 导出 SVG",
+                preview_desc: "预览颜色仅用于测试。导出的文件将保持原始黑色 SVG 样式。",
+                color_black: "黑色",
+                color_rose: "玫瑰色",
+                color_indigo: "靛蓝",
+                color_green: "绿色",
+                color_gold: "金色",
+                seo_about_title: "关于这款免费 SVG 转换器",
+                seo_about_desc: "Instant SVG Lab 是一款免费的在线 SVG 转换工具，可帮助你将 PNG、JPG、JPEG 和 WEBP 图片转换为可缩放的 SVG 文件。你可以一次上传多个文件，预览每个 SVG 结果，并单独下载或打包为 ZIP 下载。",
+                seo_why_title: "为什么使用在线 PNG 转 SVG 转换器？",
+                seo_why_desc: "SVG 是可缩放矢量图形格式，无论放大还是缩小都能保持清晰。它适用于图标、标志、设计素材、简单插图和网页图形。我们的批量 SVG 转换器让你无需安装额外软件，也能轻松转换多张图片。",
+                seo_features_title: "功能特点",
+                seo_feature_1: "适用于 PNG、JPG、JPEG 和 WEBP 的免费 SVG 转换器",
+                seo_feature_2: "批量上传与转换流程",
+                seo_feature_3: "每个转换文件都支持实时 SVG 预览",
+                seo_feature_4: "支持单个 SVG 导出或全部 ZIP 下载",
+                seo_feature_5: "界面简洁、运行快速的浏览器工作流",
+                seo_how_title: "如何将图片转换为 SVG",
+                seo_step_1: "上传一个或多个图片文件。",
+                seo_step_2: "根据上传的图片生成 SVG 文件。",
+                seo_step_3: "在工作区中预览每个 SVG。",
+                seo_step_4: "下载单个 SVG 文件，或导出全部 ZIP。"
+            fr: {
+                page_lang: "fr",
+                badge: "Studio Vectoriel Créatif",
+                language_label: "Langue",
+                hero_title: "Convertisseur SVG gratuit pour PNG, JPG, JPEG et WEBP",
+                hero_subtitle: "Convertissez vos images en fichiers SVG propres en ligne. Téléversez plusieurs images, prévisualisez chaque résultat en temps réel et exportez des fichiers SVG un par un ou tous en même temps.",
+                upload_title: "Déposez vos fichiers",
+                upload_desc: "Glissez-déposez vos images et convertissez-les en quelques clics.",
+                image_files_label: "Fichiers image",
+                drop_title: "Déposez vos images ici",
+                drop_subtitle: "ou cliquez pour parcourir vos fichiers",
+                drop_types: "Prend en charge PNG, JPG, JPEG, WEBP",
+                generate_button: "Générer des fichiers SVG",
+                feature1_title: "✦ Téléversement multiple",
+                feature1_desc: "Importez plusieurs images et traitez-les en une seule fois.",
+                feature2_title: "✦ Aperçu intelligent",
+                feature2_desc: "Concentrez-vous sur un fichier à la fois et testez les couleurs avant l’export.",
+                feature3_title: "✦ Export instantané",
+                feature3_desc: "Téléchargez un seul SVG ou exportez l’ensemble en ZIP.",
+                error_title: "Erreur",
+                collection_title: "Votre collection SVG",
+                collection_desc: "{count} fichier(s) prêt(s) pour l’aperçu et l’export",
+                export_all_zip: "🗂 Exporter tout en ZIP",
+                svg_ready: "SVG prêt",
+                open_preview: "Ouvrir l’aperçu",
+                export_svg: "⬇ Exporter le SVG",
+                preview_desc: "Les couleurs d’aperçu sont uniquement destinées à l’exploration. Les fichiers exportés conservent le style SVG noir d’origine.",
+                color_black: "Noir",
+                color_rose: "Rose",
+                color_indigo: "Indigo",
+                color_green: "Vert",
+                color_gold: "Or",
+                seo_about_title: "À propos de ce convertisseur SVG gratuit",
+                seo_about_desc: "Instant SVG Lab est un convertisseur SVG en ligne gratuit qui vous aide à transformer des images PNG, JPG, JPEG et WEBP en fichiers SVG redimensionnables. Vous pouvez téléverser plusieurs fichiers à la fois, prévisualiser chaque résultat SVG et télécharger les fichiers individuellement ou dans une archive ZIP.",
+                seo_why_title: "Pourquoi utiliser un convertisseur PNG vers SVG en ligne ?",
+                seo_why_desc: "Les fichiers SVG sont des graphiques vectoriels redimensionnables, ce qui signifie qu’ils restent nets à toute taille. Ils sont utiles pour les icônes, logos, ressources de design, illustrations simples et graphismes web. Notre convertisseur SVG par lot facilite la conversion de plusieurs images au même endroit sans installer de logiciel supplémentaire.",
+                seo_features_title: "Fonctionnalités",
+                seo_feature_1: "Convertisseur SVG gratuit pour PNG, JPG, JPEG et WEBP",
+                seo_feature_2: "Flux de travail de téléversement et conversion par lot",
+                seo_feature_3: "Aperçu SVG en temps réel pour chaque fichier converti",
+                seo_feature_4: "Export SVG individuel ou téléchargement ZIP de tous les résultats",
+                seo_feature_5: "Flux de travail rapide dans le navigateur avec une interface propre",
+                seo_how_title: "Comment convertir des images en SVG",
+                seo_step_1: "Téléversez un ou plusieurs fichiers image.",
+                seo_step_2: "Générez des fichiers SVG à partir de vos images téléversées.",
+                seo_step_3: "Prévisualisez chaque SVG converti dans l’espace de travail.",
+                seo_step_4: "Téléchargez les fichiers SVG individuellement ou exportez tout en ZIP."
+            }
+        };
+
         const fileInput = document.getElementById("file");
         const dropZone = document.getElementById("drop-zone");
         const selectedFiles = document.getElementById("selected-files");
+        const languageSelect = document.getElementById("language-select");
 
         function renderSelectedFiles(files) {
             if (!selectedFiles) return;
@@ -331,6 +591,89 @@
                 renderPreview();
             });
         });
+
+        function updateMetaForLanguage(lang) {
+            const metaDescriptions = {
+                en: "Convert PNG, JPG, JPEG, and WEBP images to SVG online for free. Upload multiple files, preview each result, and download individual SVGs or all files as a ZIP.",
+                ko: "PNG, JPG, JPEG, WEBP 이미지를 무료로 SVG로 변환하세요. 여러 파일을 업로드하고, 결과를 미리보며, 개별 SVG 또는 ZIP으로 전체 다운로드가 가능합니다.",
+                ja: "PNG、JPG、JPEG、WEBP画像を無料でSVGに変換。複数ファイルをアップロードし、結果をプレビューして、個別またはZIPでまとめてダウンロードできます。",
+                zh: "免费将 PNG、JPG、JPEG 和 WEBP 图片转换为 SVG。支持多文件上传、结果预览，以及单个或 ZIP 批量下载。"
+                fr: "Convertissez gratuitement des images PNG, JPG, JPEG et WEBP en SVG en ligne. Téléversez plusieurs fichiers, prévisualisez chaque résultat et téléchargez des SVG individuels ou tous les fichiers au format ZIP."
+            };
+
+            const titles = {
+                en: "Free SVG Converter - PNG to SVG Online, Batch Upload & ZIP Download",
+                ko: "무료 SVG 변환기 - PNG to SVG 온라인 변환, 다중 업로드 및 ZIP 다운로드",
+                ja: "無料SVG変換ツール - PNGをSVGにオンライン変換、一括アップロードとZIPダウンロード対応",
+                zh: "免费 SVG 转换器 - 在线 PNG 转 SVG，支持批量上传与 ZIP 下载"
+                fr: "Convertisseur SVG gratuit - PNG vers SVG en ligne, téléversement multiple et téléchargement ZIP"
+            };
+
+            document.title = titles[lang] || titles.en;
+
+            const descriptionMeta = document.querySelector('meta[name="description"]');
+            if (descriptionMeta) {
+                descriptionMeta.setAttribute("content", metaDescriptions[lang] || metaDescriptions.en);
+            }
+
+            const ogTitle = document.querySelector('meta[property="og:title"]');
+            if (ogTitle) {
+                ogTitle.setAttribute("content", document.title);
+            }
+
+            const ogDescription = document.querySelector('meta[property="og:description"]');
+            if (ogDescription) {
+                ogDescription.setAttribute("content", metaDescriptions[lang] || metaDescriptions.en);
+            }
+
+            const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+            if (twitterTitle) {
+                twitterTitle.setAttribute("content", document.title);
+            }
+
+            const twitterDescription = document.querySelector('meta[name="twitter:description"]');
+            if (twitterDescription) {
+                twitterDescription.setAttribute("content", metaDescriptions[lang] || metaDescriptions.en);
+            }
+        }
+
+        function applyTranslations(lang) {
+            const current = translations[lang] || translations.en;
+
+            document.documentElement.lang = current.page_lang || "en";
+
+            document.querySelectorAll("[data-i18n]").forEach((element) => {
+                const key = element.dataset.i18n;
+                if (!current[key]) return;
+
+                if (key === "collection_desc") {
+                    const count = element.dataset.count || "0";
+                    element.textContent = current[key].replace("{count}", count);
+                } else {
+                    element.textContent = current[key];
+                }
+            });
+
+            updateMetaForLanguage(lang);
+        }
+
+        function setLanguage(lang) {
+            const safeLang = translations[lang] ? lang : "en";
+            localStorage.setItem("siteLanguage", safeLang);
+            if (languageSelect) {
+                languageSelect.value = safeLang;
+            }
+            applyTranslations(safeLang);
+        }
+
+        if (languageSelect) {
+            languageSelect.addEventListener("change", (e) => {
+                setLanguage(e.target.value);
+            });
+        }
+
+        const savedLanguage = localStorage.getItem("siteLanguage") || "en";
+        setLanguage(savedLanguage);
 
         renderPreview();
     </script>

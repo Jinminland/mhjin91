@@ -445,3 +445,43 @@ button:hover {
         min-height: 320px;
     }
 }
+
+.hero-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+}
+
+.language-switcher {
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.language-switcher label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    opacity: 0.85;
+}
+
+.language-switcher select {
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: #fff;
+    font: inherit;
+    cursor: pointer;
+}
+
+@media (max-width: 900px) {
+    .hero-topbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .language-switcher {
+        max-width: 220px;
+    }
+}
