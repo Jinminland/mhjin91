@@ -13,8 +13,7 @@
                 <p class="badge">Simple SVG Tool</p>
                 <h1>Convert multiple images into clean SVG files</h1>
                 <p class="subtitle">
-                    Upload PNG, JPG, JPEG, or WEBP files, choose a fill color,
-                    and convert several images at once.
+                    Upload PNG, JPG, JPEG, or WEBP files and preview them in different colors before downloading.
                 </p>
             </div>
         </header>
@@ -23,7 +22,7 @@
             <section class="card upload-card">
                 <h2>Upload your images</h2>
                 <p class="section-desc">
-                    Select one or more files, choose a fill color, and convert them instantly.
+                    Select one or more files and convert them instantly.
                 </p>
 
                 <form action="/convert" method="post" enctype="multipart/form-data" class="form-grid">
@@ -39,19 +38,6 @@
                         />
                     </div>
 
-                    <div class="form-group color-group">
-                        <label for="fill_color">Fill color</label>
-                        <div class="color-row">
-                            <input
-                                type="color"
-                                id="fill_color"
-                                name="fill_color"
-                                value="{{ fill_color or '#000000' }}"
-                            />
-                            <span class="color-value">{{ fill_color or '#000000' }}</span>
-                        </div>
-                    </div>
-
                     <div class="form-actions">
                         <button type="submit">Convert to SVG</button>
                     </div>
@@ -64,12 +50,12 @@
                     <p>Choose several image files and convert them in one go.</p>
                 </div>
                 <div class="card feature-card">
-                    <h3>Color control</h3>
-                    <p>Apply one fill color consistently across all converted SVG files.</p>
+                    <h3>Live color preview</h3>
+                    <p>Try a few colors instantly before downloading your SVG files.</p>
                 </div>
                 <div class="card feature-card">
                     <h3>Instant download</h3>
-                    <p>Preview each result and download SVG files one by one.</p>
+                    <p>Preview each result and download the original black SVG one by one.</p>
                 </div>
             </section>
 
@@ -83,14 +69,27 @@
             {% if results %}
                 <section class="result-grid">
                     {% for item in results %}
-                        <div class="card">
+                        <div class="card result-card">
                             <h2>{{ item.filename }}</h2>
-                            <div class="preview-box">
+
+                            <div class="color-picker-row">
+                                <button type="button" class="color-btn active" data-color="#000000">Black</button>
+                                <button type="button" class="color-btn" data-color="#ff0000">Red</button>
+                                <button type="button" class="color-btn" data-color="#0000ff">Blue</button>
+                                <button type="button" class="color-btn" data-color="#008000">Green</button>
+                                <button type="button" class="color-btn" data-color="#ffd700">Yellow</button>
+                            </div>
+
+                            <div class="preview-box svg-preview">
                                 {{ item.svg | safe }}
                             </div>
 
-                            <form action="/download-svg" method="post" style="margin-top: 16px;">
-                                <input type="hidden" name="svg_text" value="{{ item.svg | e }}">
+                            <p class="download-note">
+                                Color buttons change preview only. Download stays as the original black SVG.
+                            </p>
+
+                            <form action="/download-svg" method="post" class="download-form" style="margin-top: 16px;">
+                                <input type="hidden" name="svg_text" class="svg-hidden-input" value="{{ item.svg | e }}">
                                 <input type="hidden" name="filename" value="{{ item.svg_filename }}">
                                 <button type="submit">Download SVG</button>
                             </form>
@@ -100,5 +99,31 @@
             {% endif %}
         </main>
     </div>
+
+    <script>
+        function updateSvgFill(svgText, color) {
+            return svgText.replace(/fill="[^"]*"/g, `fill="${color}"`);
+        }
+
+        document.querySelectorAll(".result-card").forEach((card) => {
+            const previewBox = card.querySelector(".svg-preview");
+            const hiddenInput = card.querySelector(".svg-hidden-input");
+            const colorButtons = card.querySelectorAll(".color-btn");
+
+            const originalSvg = hiddenInput.value;
+
+            colorButtons.forEach((button) => {
+                button.addEventListener("click", () => {
+                    const color = button.dataset.color;
+                    const previewSvg = updateSvgFill(originalSvg, color);
+
+                    previewBox.innerHTML = previewSvg;
+
+                    colorButtons.forEach((btn) => btn.classList.remove("active"));
+                    button.classList.add("active");
+                });
+            });
+        });
+    </script>
 </body>
 </html>
