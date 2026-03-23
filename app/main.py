@@ -37,7 +37,13 @@ async def sitemap_xml():
     </url>
 </urlset>
 """
-    return Response(content=xml_content, media_type="application/xml")
+    return Response(
+        content=xml_content,
+        media_type="application/xml",
+        headers={
+            "Content-Type": "application/xml; charset=utf-8"
+        }
+    )
 
 
 @app.get("/", response_class=HTMLResponse)
