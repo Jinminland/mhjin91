@@ -101,6 +101,27 @@
                     <div class="form-actions">
                         <button type="submit" data-i18n="generate_button">Generate SVG Files</button>
                     </div>
+
+                    <div class="pricing-box">
+                        <p style="margin-top:10px; font-size:14px; opacity:0.8;">
+                            Free: 5 conversions per day
+                        </p>
+
+                        <div style="margin-top:10px; display:flex; gap:10px; justify-content:center;">
+                            <form action="/create-checkout-session/monthly" method="post">
+                                <button type="submit" class="secondary-btn">
+                                    Pro Monthly €5.99
+                                </button>
+                            </form>
+
+                            <form action="/create-checkout-session/lifetime" method="post">
+                                <button type="submit" class="secondary-btn">
+                                    Lifetime €39.99
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
                 </form>
             </section>
 
@@ -121,7 +142,7 @@
 
             {% if error %}
                 <section class="card error-box">
-                    <h2 data-i18n="error_title">Error</h2>
+                    <h2>Free limit reached</h2>
                     <p>{{ error }}</p>
                 </section>
             {% endif %}
