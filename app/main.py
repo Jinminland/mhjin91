@@ -17,12 +17,27 @@ templates = Jinja2Templates(directory="app/templates")
 
 @app.get("/robots.txt", include_in_schema=False)
 async def robots_txt():
-    return FileResponse(path="app/static/robots.txt", media_type="text/plain")
+    return Response(
+        content="""User-agent: *
+Allow: /
+Sitemap: https://mhjin91-docker.onrender.com/sitemap.xml
+""",
+        media_type="text/plain",
+    )
 
 
 @app.get("/sitemap.xml", include_in_schema=False)
 async def sitemap_xml():
-    return FileResponse(path="app/static/sitemap.xml", media_type="application/xml")
+    xml_content = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>https://mhjin91-docker.onrender.com/</loc>
+        <changefreq>weekly</changefreq>
+        <priority>1.0</priority>
+    </url>
+</urlset>
+"""
+    return Response(content=xml_content, media_type="application/xml")
 
 
 @app.get("/", response_class=HTMLResponse)
