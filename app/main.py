@@ -189,31 +189,60 @@ async def download_svg(
     svg_text: str = Form(...),
     filename: str = Form("converted.svg"),
 ):
-    return Response(
-        content=svg_text,
-        media_type="image/svg+xml",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
+    try:
+        if not svg_text or not svg_text.strip():
+            return Response(content="SVG content is empty", status_code=400)
+
+        # 안전한 파일명 처리
+        base_name = os.path.splitext(filename)[0] if filename else "converted"
+        safe_name = f"{base_name}.svg"
+
+        return Response(
+            content=svg_text.encode("utf-8"),
+            media_type="image/svg+xml",
+            headers={
+                "Content-Disposition": f'attachment; filename="{safe_name}"'
+            },
+        )
+
+    except Exception as e:
+        print("DOWNLOAD SVG ERROR:", repr(e))
+        return Response(content=f"Download failed: {str(e)}", status_code=500)
 
 
 @app.post("/download-all")
 async def download_all_svgs(results_json: str = Form(...)):
-    results = json.loads(results_json)
+    try:
+        results = json.loads(results_json)
 
-    zip_buffer = io.BytesIO()
+        if not results:
+            return Response("No files", status_code=400)
 
-    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-        for item in results:
-            zip_file.writestr(item["svg_filename"], item["svg"])
+        zip_buffer = io.BytesIO()
 
-    zip_buffer.seek(0)
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            for item in results:
+                svg = item.get("svg")
+                name = item.get("svg_filename", "converted.svg")
 
-    return Response(
-        content=zip_buffer.getvalue(),
-        media_type="application/zip",
-        headers={"Content-Disposition": 'attachment; filename="converted_svgs.zip"'},
-    )
+                if not svg:
+                    continue
 
+                zip_file.writestr(name, svg)
+
+        zip_buffer.seek(0)
+
+        return Response(
+            content=zip_buffer.getvalue(),
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": 'attachment; filename="converted_svgs.zip"'
+            },
+        )
+
+    except Exception as e:
+        print("ZIP ERROR:", repr(e))
+        return Response(f"ZIP failed: {str(e)}", status_code=500)
 
 # =========================
 # Stripe

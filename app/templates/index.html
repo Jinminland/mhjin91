@@ -203,11 +203,15 @@
                                     <div class="file-row-actions">
                                         <button type="button" class="preview-btn" data-i18n="open_preview">Open Preview</button>
 
-                                        <form action="/download-svg" method="post">
-                                            <input type="hidden" name="svg_text" value="{{ item.svg | e }}">
-                                            <input type="hidden" name="filename" value="{{ item.svg_filename }}">
-                                            <button type="submit" class="download-btn" data-i18n="export_svg">⬇ Export SVG</button>
-                                        </form>
+                                        <button
+                                            type="button"
+                                            class="download-btn"
+                                            onclick="downloadSVG(this.closest('.file-row').dataset.svg, this.closest('.file-row').dataset.svgFilename)"
+                                            data-i18n="export_svg"
+                                        >
+                                        ⬇ Export SVG
+                                        </button>
+
                                     </div>
                                 </div>
                             {% endfor %}
@@ -749,6 +753,25 @@
     setLanguage(savedLanguage);
 
     renderPreview();
+    function downloadSVG(svgText, filename = "converted.svg") {
+    if (!svgText) {
+        alert("SVG empty");
+        return;
+    }
+
+    const blob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename.endsWith(".svg") ? filename : filename + ".svg";
+
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    URL.revokeObjectURL(url);
+}
     </script>
 </body>
 </html>
