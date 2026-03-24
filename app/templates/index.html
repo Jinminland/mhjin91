@@ -211,6 +211,7 @@
                                         >
                                         ⬇ Export SVG
                                         </button>
+                                        <button type="button" class="remove-btn" onclick="removeFile(this)">❌</button>
 
                                     </div>
                                 </div>
@@ -771,6 +772,24 @@
     a.remove();
 
     URL.revokeObjectURL(url);
+}
+function removeFile(btn) {
+    const row = btn.closest(".file-row");
+    row.remove();
+
+    const remaining = document.querySelectorAll(".file-row");
+
+    // 🔥 남은 파일 있으면 첫번째 자동 선택
+    if (remaining.length > 0) {
+        remaining[0].click();
+    } else {
+        // 🔥 아무것도 없으면 preview 비우기
+        const preview = document.getElementById("main-preview");
+        if (preview) preview.innerHTML = "";
+
+        const name = document.getElementById("preview-file-name");
+        if (name) name.textContent = "";
+    }
 }
     </script>
 </body>

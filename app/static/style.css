@@ -538,3 +538,12 @@ button:hover {
 .preview-box svg {
     max-height: 380px;
 }
+.remove-btn {
+    background: #ffe5e9;
+    color: #d11a2a;
+    box-shadow: none;
+}
+
+.remove-btn:hover {
+    background: #ffccd3;
+}
