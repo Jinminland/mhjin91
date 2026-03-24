@@ -327,13 +327,20 @@ async def stripe_webhook(
 
     if event["type"] == "checkout.session.completed":
         session = event["data"]["object"]
+
         email = session.get("customer_email")
         plan = session.get("metadata", {}).get("plan", "unknown")
+
+        # 🔥 test 모드 처리
+        if session.get("livemode") is False:
+            # 👉 너 이메일만 허용
+            if email != "luewin96@gmail.com":
+                return Response(status_code=200)
 
         if email:
             add_paid_user(email, plan)
 
-    return Response(status_code=200)
+        return Response(status_code=200)
 
 
 @app.get("/success", response_class=HTMLResponse)

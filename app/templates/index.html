@@ -592,7 +592,7 @@
         selectedFiles.innerHTML = names.join("");
     }
 
-    fasync function syncEmailToCheckoutForms(emailOverride = null) {
+    async function syncEmailToCheckoutForms(emailOverride = null) {
         const value = emailOverride ?? (emailInput ? emailInput.value : "");
         if (monthlyEmailInput) monthlyEmailInput.value = value;
         if (lifetimeEmailInput) lifetimeEmailInput.value = value;
@@ -839,15 +839,17 @@ async function updateAuthUI() {
     syncEmailToCheckoutForms(email);
 }
 
+const supabaseUrl = "여기에 supabase url";
+const supabaseKey = "여기에 anon public key";
+
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
 supabase.auth.onAuthStateChange(() => {
     updateAuthUI();
 });
 
 updateAuthUI();
-const supabaseUrl = "여기에 supabase url";
-const supabaseKey = "여기에 anon public key";
 
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 async function login() {
     const email = prompt("Enter your email:");
