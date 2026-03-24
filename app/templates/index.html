@@ -98,32 +98,43 @@
                         <div id="selected-files" class="selected-files"></div>
                     </div>
 
+                    <div class="form-group">
+                        <label for="user_email" data-i18n="email_label">Email</label>
+                        <input
+                            type="email"
+                            id="user_email"
+                            name="user_email"
+                            placeholder="Enter your email for Pro access"
+                            style="width:100%; padding:12px; border-radius:12px; border:1px solid #ddd;"
+                        />
+                    </div>
+
                     <div class="form-actions">
                         <button type="submit" data-i18n="generate_button">Generate SVG Files</button>
                     </div>
                 </form>
 
-                    <div class="pricing-box">
-                        <p style="margin-top:10px; font-size:14px; opacity:0.8;">
-                            Free: 5 conversions per day
-                        </p>
+                <div class="pricing-box">
+                    <p style="margin-top:10px; font-size:14px; opacity:0.8;" data-i18n="free_limit_text">
+                        Free: 5 conversions per day
+                    </p>
 
-                        <div style="margin-top:10px; display:flex; gap:10px; justify-content:center;">
-                            <form action="/create-checkout-session/monthly" method="post">
-                                <button type="submit" class="secondary-btn">
-                                    Pro Monthly €5.99
-                                </button>
-                            </form>
+                    <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                        <form action="/create-checkout-session/monthly" method="post">
+                            <input type="hidden" name="user_email" id="monthly_user_email">
+                            <button type="submit" class="secondary-btn" data-i18n="monthly_button">
+                                Pro Monthly €5.99
+                            </button>
+                        </form>
 
-                            <form action="/create-checkout-session/lifetime" method="post">
-                                <button type="submit" class="secondary-btn">
-                                    Lifetime €39.99
-                                </button>
-                            </form>
-                        </div>
+                        <form action="/create-checkout-session/lifetime" method="post">
+                            <input type="hidden" name="user_email" id="lifetime_user_email">
+                            <button type="submit" class="secondary-btn" data-i18n="lifetime_button">
+                                Lifetime €39.99
+                            </button>
+                        </form>
                     </div>
-
-                </form>
+                </div>
             </section>
 
             <section class="feature-grid">
@@ -143,7 +154,7 @@
 
             {% if error %}
                 <section class="card error-box">
-                    <h2>Free limit reached</h2>
+                    <h2 data-i18n="limit_title">Free limit reached</h2>
                     <p>{{ error }}</p>
                 </section>
             {% endif %}
@@ -282,6 +293,11 @@
             upload_title: "Drop Your Files",
             upload_desc: "Drag, drop, and convert your artwork in just a few clicks.",
             image_files_label: "Image files",
+            email_label: "Email",
+            free_limit_text: "Free: 5 conversions per day",
+            monthly_button: "Pro Monthly €5.99",
+            lifetime_button: "Lifetime €39.99",
+            limit_title: "Free limit reached",
             drop_title: "Drop your images here",
             drop_subtitle: "or tap to browse your files",
             drop_types: "Supports PNG, JPG, JPEG, WEBP",
@@ -330,6 +346,11 @@
             upload_title: "파일 업로드",
             upload_desc: "드래그 앤 드롭으로 이미지를 빠르게 변환해보세요.",
             image_files_label: "이미지 파일",
+            email_label: "이메일",
+            free_limit_text: "무료: 하루 5회 변환 가능",
+            monthly_button: "월간 Pro €5.99",
+            lifetime_button: "평생 이용 €39.99",
+            limit_title: "무료 사용량을 모두 썼어요",
             drop_title: "이미지를 여기에 놓으세요",
             drop_subtitle: "또는 클릭해서 파일을 선택하세요",
             drop_types: "PNG, JPG, JPEG, WEBP 지원",
@@ -378,6 +399,11 @@
             upload_title: "ファイルをアップロード",
             upload_desc: "ドラッグ＆ドロップで作品を数クリックで変換できます。",
             image_files_label: "画像ファイル",
+            email_label: "メールアドレス",
+            free_limit_text: "無料: 1日5回まで変換可能",
+            monthly_button: "月額 Pro €5.99",
+            lifetime_button: "永久アクセス €39.99",
+            limit_title: "無料利用上限に達しました",
             drop_title: "ここに画像をドロップ",
             drop_subtitle: "またはクリックしてファイルを選択",
             drop_types: "PNG、JPG、JPEG、WEBP対応",
@@ -426,6 +452,11 @@
             upload_title: "上传文件",
             upload_desc: "拖放图片，几步即可完成转换。",
             image_files_label: "图片文件",
+            email_label: "电子邮箱",
+            free_limit_text: "免费：每天可转换 5 次",
+            monthly_button: "月度 Pro €5.99",
+            lifetime_button: "终身访问 €39.99",
+            limit_title: "已达到免费使用上限",
             drop_title: "将图片拖放到这里",
             drop_subtitle: "或点击浏览并选择文件",
             drop_types: "支持 PNG、JPG、JPEG、WEBP",
@@ -474,6 +505,11 @@
             upload_title: "Déposez vos fichiers",
             upload_desc: "Glissez-déposez vos images et convertissez-les en quelques clics.",
             image_files_label: "Fichiers image",
+            email_label: "E-mail",
+            free_limit_text: "Gratuit : 5 conversions par jour",
+            monthly_button: "Pro mensuel €5.99",
+            lifetime_button: "Accès à vie €39.99",
+            limit_title: "Limite gratuite atteinte",
             drop_title: "Déposez vos images ici",
             drop_subtitle: "ou cliquez pour parcourir vos fichiers",
             drop_types: "Prend en charge PNG, JPG, JPEG, WEBP",
@@ -519,6 +555,9 @@
     const dropZone = document.getElementById("drop-zone");
     const selectedFiles = document.getElementById("selected-files");
     const languageSelect = document.getElementById("language-select");
+    const emailInput = document.getElementById("user_email");
+    const monthlyEmailInput = document.getElementById("monthly_user_email");
+    const lifetimeEmailInput = document.getElementById("lifetime_user_email");
 
     function renderSelectedFiles(files) {
         if (!selectedFiles) return;
@@ -534,10 +573,21 @@
         selectedFiles.innerHTML = names.join("");
     }
 
+    function syncEmailToCheckoutForms() {
+        const value = emailInput ? emailInput.value : "";
+        if (monthlyEmailInput) monthlyEmailInput.value = value;
+        if (lifetimeEmailInput) lifetimeEmailInput.value = value;
+    }
+
     if (fileInput) {
         fileInput.addEventListener("change", () => {
             renderSelectedFiles(fileInput.files);
         });
+    }
+
+    if (emailInput) {
+        emailInput.addEventListener("input", syncEmailToCheckoutForms);
+        syncEmailToCheckoutForms();
     }
 
     if (dropZone && fileInput) {
@@ -699,4 +749,6 @@
     setLanguage(savedLanguage);
 
     renderPreview();
-</script>
+    </script>
+</body>
+</html>
