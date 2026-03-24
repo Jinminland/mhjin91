@@ -121,6 +121,9 @@ async def convert_images(
     today = datetime.utcnow().date()
     normalized_email = user_email.lower().strip() if user_email else ""
 
+    # 🔥 유효 파일만 먼저 필터
+    valid_files = [f for f in files if f.filename]
+
     if not is_paid_user(normalized_email):
         if user_ip not in usage:
             usage[user_ip] = {"date": today, "count": 0}
@@ -128,7 +131,8 @@ async def convert_images(
         if usage[user_ip]["date"] != today:
             usage[user_ip] = {"date": today, "count": 0}
 
-        if usage[user_ip]["count"] + len(files) > 5:
+        # 🔥 여기 수정 (valid_files 기준)
+        if usage[user_ip]["count"] + len(valid_files) > 5:
             return templates.TemplateResponse(
                 "index.html",
                 {
@@ -140,15 +144,12 @@ async def convert_images(
 
     results = []
     error = None
+    converted_count = 0  # 🔥 실제 변환된 개수
 
     try:
-        for file in files:
-            if not file.filename:
-                continue
-
+        for file in valid_files:
             file_bytes = await file.read()
 
-            # 🔥 안전 처리 추가 (모바일 업로드 실패 방지)
             if not file_bytes:
                 continue
 
@@ -165,8 +166,11 @@ async def convert_images(
                 }
             )
 
+            converted_count += 1  # 🔥 여기 핵심
+
+        # 🔥 여기 수정 (len(files) ❌ → converted_count ✅)
         if not is_paid_user(normalized_email):
-            usage[user_ip]["count"] += len(files)
+            usage[user_ip]["count"] += converted_count
 
     except Exception as e:
         error = str(e)
@@ -179,7 +183,6 @@ async def convert_images(
             "error": error,
         },
     )
-
 
 # =========================
 # 다운로드
