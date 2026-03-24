@@ -39,10 +39,16 @@
     />
 
     <link rel="stylesheet" href="/static/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div class="page">
         <header class="hero">
+            <div id="auth-status" style="position:absolute; top:60px; right:20px; color:white; font-size:14px; z-index:1000;"></div>
+            <div style="position:absolute; top:20px; right:20px; display:flex; gap:8px; z-index:1000;">
+                <button type="button" onclick="login()">Login</button>
+                 <button type="button" onclick="logout()">Logout</button>
+            </div>
             <div class="hero-topbar">
                 <div class="hero-text">
                     <p class="badge" data-i18n="badge">Creative Vector Studio</p>
@@ -120,16 +126,18 @@
                     </p>
 
                     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-                        <form action="/create-checkout-session/monthly" method="post">
+                        <form id="monthly-checkout-form" action="/create-checkout-session/monthly" method="post">
                             <input type="hidden" name="user_email" id="monthly_user_email">
-                            <button type="submit" class="secondary-btn" data-i18n="monthly_button">
+                            <input type="hidden" name="access_token" id="monthly_access_token">
+                            <button id="monthly-checkout-btn" type="submit" class="secondary-btn" data-i18n="monthly_button">
                                 Pro Monthly €5.99
                             </button>
                         </form>
 
-                        <form action="/create-checkout-session/lifetime" method="post">
+                        <form id="lifetime-checkout-form" action="/create-checkout-session/lifetime" method="post">
                             <input type="hidden" name="user_email" id="lifetime_user_email">
-                            <button type="submit" class="secondary-btn" data-i18n="lifetime_button">
+                            <input type="hidden" name="access_token" id="lifetime_access_token">
+                            <button id="lifetime-checkout-btn" type="submit" class="secondary-btn" data-i18n="lifetime_button">
                                 Lifetime €39.99
                             </button>
                         </form>
@@ -563,6 +571,12 @@
     const emailInput = document.getElementById("user_email");
     const monthlyEmailInput = document.getElementById("monthly_user_email");
     const lifetimeEmailInput = document.getElementById("lifetime_user_email");
+    const monthlyCheckoutForm = document.getElementById("monthly-checkout-form");
+    const lifetimeCheckoutForm = document.getElementById("lifetime-checkout-form");
+    const monthlyCheckoutBtn = document.getElementById("monthly-checkout-btn");
+    const lifetimeCheckoutBtn = document.getElementById("lifetime-checkout-btn");
+    const monthlyAccessTokenInput = document.getElementById("monthly_access_token");
+    const lifetimeAccessTokenInput = document.getElementById("lifetime_access_token");
 
     function renderSelectedFiles(files) {
         if (!selectedFiles) return;
@@ -578,10 +592,16 @@
         selectedFiles.innerHTML = names.join("");
     }
 
-    function syncEmailToCheckoutForms() {
-        const value = emailInput ? emailInput.value : "";
+    fasync function syncEmailToCheckoutForms(emailOverride = null) {
+        const value = emailOverride ?? (emailInput ? emailInput.value : "");
         if (monthlyEmailInput) monthlyEmailInput.value = value;
         if (lifetimeEmailInput) lifetimeEmailInput.value = value;
+
+        const { data } = await supabase.auth.getSession();
+        const token = data?.session?.access_token || "";
+
+        if (monthlyAccessTokenInput) monthlyAccessTokenInput.value = token;
+        if (lifetimeAccessTokenInput) lifetimeAccessTokenInput.value = token;
     }
 
     if (fileInput) {
@@ -790,6 +810,82 @@ function removeFile(btn) {
         const name = document.getElementById("preview-file-name");
         if (name) name.textContent = "";
     }
+}
+async function updateAuthUI() {
+    const { data, error } = await supabase.auth.getUser();
+    const authStatus = document.getElementById("auth-status");
+
+    if (error || !data?.user) {
+        if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = true;
+        if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = true;
+        if (authStatus) authStatus.textContent = "Logged out";
+        if (emailInput) emailInput.value = "";
+        syncEmailToCheckoutForms("");
+        return;
+    }
+
+    const email = data.user.email || "";
+    const res = await fetch("/check-pro?email=" + encodeURIComponent(email));
+    const result = await res.json();
+
+    if (result.pro) {
+        authStatus.textContent += " (PRO)";
+    }
+    if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = false;
+    if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = false;
+    if (authStatus) authStatus.textContent = `Logged in: ${email}`;
+
+    if (emailInput) emailInput.value = email;
+    syncEmailToCheckoutForms(email);
+}
+
+supabase.auth.onAuthStateChange(() => {
+    updateAuthUI();
+});
+
+updateAuthUI();
+const supabaseUrl = "여기에 supabase url";
+const supabaseKey = "여기에 anon public key";
+
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+async function login() {
+    const email = prompt("Enter your email:");
+    if (!email) return;
+
+    const { error } = await supabase.auth.signInWithOtp({
+        email: email,
+        options: {
+            emailRedirectTo: window.location.origin
+        }
+    });
+
+    if (error) {
+        alert("Error: " + error.message);
+    } else {
+        alert("Check your email!");
+    }
+}
+
+async function logout() {
+    await supabase.auth.signOut();
+    alert("Logged out");
+}
+function requireLoginForCheckout(e) {
+    const email = emailInput ? emailInput.value.trim() : "";
+
+    if (!email) {
+        e.preventDefault();
+        alert("Please log in first.");
+    }
+}
+
+if (monthlyCheckoutForm) {
+    monthlyCheckoutForm.addEventListener("submit", requireLoginForCheckout);
+}
+
+if (lifetimeCheckoutForm) {
+    lifetimeCheckoutForm.addEventListener("submit", requireLoginForCheckout);
 }
     </script>
 </body>

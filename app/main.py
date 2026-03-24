@@ -5,6 +5,7 @@ import zipfile
 from datetime import datetime
 
 import stripe
+import httpx
 from fastapi import FastAPI, Request, UploadFile, File, Form, Header
 from fastapi.responses import HTMLResponse, Response, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -23,6 +24,8 @@ STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
 MONTHLY_PRICE_ID = "price_1TEEGHDwkY6zitSbrBCUMkNL"
 LIFETIME_PRICE_ID = "price_1TEEHNDwkY6zitSbqo6jN25S"
 DOMAIN = "https://mhjin91-docker.onrender.com"
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 
 usage = {}
 PAID_USERS_FILE = "paid_users.json"
@@ -61,6 +64,29 @@ def add_paid_user(email: str, plan: str):
     }
     save_paid_users(paid_users)
 
+async def get_supabase_user_email(access_token: str | None):
+    if not access_token or not SUPABASE_URL or not SUPABASE_ANON_KEY:
+        return None
+
+    url = f"{SUPABASE_URL}/auth/v1/user"
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "apikey": SUPABASE_ANON_KEY,
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            res = await client.get(url, headers=headers)
+
+        if res.status_code != 200:
+            return None
+
+        data = res.json()
+        email = data.get("email")
+        return email.lower().strip() if email else None
+
+    except Exception:
+        return None
 
 # =========================
 # 기본 라우팅 (🔥 핵심 수정)
@@ -254,7 +280,13 @@ async def download_all_svgs(results_json: str = Form(...)):
 async def create_checkout_session(
     plan: str,
     user_email: str = Form(...),
+    access_token: str = Form(""),
 ):
+    verified_email = await get_supabase_user_email(access_token)
+
+    if not verified_email or verified_email != user_email.lower().strip():
+        return Response(content="Login required", status_code=401)
+
     if plan == "monthly":
         price_id = MONTHLY_PRICE_ID
         mode = "subscription"
@@ -268,8 +300,8 @@ async def create_checkout_session(
         payment_method_types=["card"],
         line_items=[{"price": price_id, "quantity": 1}],
         mode=mode,
-        customer_email=user_email,
-        metadata={"plan": plan, "user_email": user_email},
+        customer_email=verified_email,
+        metadata={"plan": plan, "user_email": verified_email},
         success_url=f"{DOMAIN}/success",
         cancel_url=f"{DOMAIN}/",
     )
@@ -307,3 +339,7 @@ async def stripe_webhook(
 @app.get("/success", response_class=HTMLResponse)
 async def success(request: Request):
     return templates.TemplateResponse("success.html", {"request": request})
+
+@app.get("/check-pro")
+async def check_pro(email: str):
+    return {"pro": is_paid_user(email)}
