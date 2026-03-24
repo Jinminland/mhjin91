@@ -296,6 +296,13 @@
     </div>
 
     <script>
+    const supabaseUrl = "https://uqndklhxcdkoclknwohc.supabase.co";
+    const supabaseKey = "sb_publishable_g-_XiNAsgDY9uw43XVzDAA_wWMSFpga";
+
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    window.supabase = supabase;
+
     const translations = {
         en: {
             page_lang: "en",
@@ -838,11 +845,6 @@ async function updateAuthUI() {
     if (emailInput) emailInput.value = email;
     syncEmailToCheckoutForms(email);
 }
-
-const supabaseUrl = "https://uqndklhxcdkoclknwohc.supabase.co";
-const supabaseKey = "sb_publishable_g-_XiNAsgDY9uw43XVzDAA_wWMSFpga";
-
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 supabase.auth.onAuthStateChange(() => {
     updateAuthUI();
