@@ -296,10 +296,10 @@
     </div>
 
     <script>
-    const supabaseUrl = "https://uqndklhxcdkoclknwohc.supabaseClient.co";
+    const supabaseUrl = "https://uqndklhxcdkoclknwohc.supabase.co";
     const supabaseKey = "sb_publishable_g-_XiNAsgDY9uw43XVzDAA_wWMSFpga";
 
-    const supabaseClient = supabaseClient.createClient(supabaseUrl, supabaseKey);
+    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 
     const translations = {
@@ -839,7 +839,7 @@ async function updateAuthUI() {
     }
     if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = false;
     if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = false;
-    if (authStatus) authStatus.textContent = `Logged in: ${email}`;
+    if (authStatus) authStatus.textContent = result.pro ? `Logged in: ${email} (PRO)` : `Logged in: ${email}`;
 
     if (emailInput) emailInput.value = email;
     syncEmailToCheckoutForms(email);
