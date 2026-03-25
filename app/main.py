@@ -106,7 +106,7 @@ async def get_usage(email: str):
     url = f"{SUPABASE_URL}/rest/v1/usage_limits?email=eq.{email}"
     headers = {
         "apikey": SUPABASE_ANON_KEY,
-        "Authorization": f"Bearer {SUPABASE_ANON_KEY},
+        "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
     }
 
     async with httpx.AsyncClient() as client:
