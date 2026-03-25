@@ -24,15 +24,15 @@ STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
 MONTHLY_PRICE_ID = "price_1TEEGHDwkY6zitSbrBCUMkNL"
 LIFETIME_PRICE_ID = "price_1TEEHNDwkY6zitSbqo6jN25S"
 DOMAIN = "https://mhjin91-docker.onrender.com"
+
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 
-usage = {}
 PAID_USERS_FILE = "paid_users.json"
 
 
 # =========================
-# 안전 파일 처리
+# Paid user 관리
 # =========================
 def load_paid_users():
     if not os.path.exists(PAID_USERS_FILE):
@@ -53,7 +53,18 @@ def is_paid_user(email: str | None):
     if not email:
         return False
     paid_users = load_paid_users()
-    return email.lower().strip() in paid_users
+    user = paid_users.get(email.lower().strip())
+    if not user:
+        return False
+
+    # 👉 monthly는 만료 체크
+    if user.get("plan") == "monthly":
+        paid_at = datetime.fromisoformat(user["paid_at"])
+        days = (datetime.utcnow() - paid_at).days
+        if days > 30:
+            return False
+
+    return True
 
 
 def add_paid_user(email: str, plan: str):
@@ -64,8 +75,12 @@ def add_paid_user(email: str, plan: str):
     }
     save_paid_users(paid_users)
 
+
+# =========================
+# Supabase 로그인 확인
+# =========================
 async def get_supabase_user_email(access_token: str | None):
-    if not access_token or not SUPABASE_URL or not SUPABASE_ANON_KEY:
+    if not access_token:
         return None
 
     url = f"{SUPABASE_URL}/auth/v1/user"
@@ -74,204 +89,126 @@ async def get_supabase_user_email(access_token: str | None):
         "apikey": SUPABASE_ANON_KEY,
     }
 
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            res = await client.get(url, headers=headers)
+    async with httpx.AsyncClient() as client:
+        res = await client.get(url, headers=headers)
 
-        if res.status_code != 200:
-            return None
-
-        data = res.json()
-        email = data.get("email")
-        return email.lower().strip() if email else None
-
-    except Exception:
+    if res.status_code != 200:
         return None
 
+    data = res.json()
+    return data.get("email")
+
+
 # =========================
-# 기본 라우팅 (🔥 핵심 수정)
+# usage (Supabase)
+# =========================
+async def get_usage(email: str):
+    url = f"{SUPABASE_URL}/rest/v1/usage_limits?email=eq.{email}"
+    headers = {
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": f"Bearer {SUPABASE_ANON_KEY},
+    }
+
+    async with httpx.AsyncClient() as client:
+        res = await client.get(url, headers=headers)
+
+    data = res.json()
+    return data[0] if data else None
+
+
+async def upsert_usage(email: str, count: int, today: str):
+    url = f"{SUPABASE_URL}/rest/v1/usage_limits"
+    headers = {
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates",
+    }
+
+    payload = {
+        "email": email,
+        "count": count,
+        "last_date": today,
+    }
+
+    async with httpx.AsyncClient() as client:
+        await client.post(url, headers=headers, json=payload)
+
+
+# =========================
+# Home
 # =========================
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    return templates.TemplateResponse(
-        "index.html",
-        {
-            "request": request,
-            "results": None,
-            "error": None,
-        },
-    )
+    return templates.TemplateResponse("index.html", {"request": request})
 
 
 # =========================
-# robots / sitemap
-# =========================
-@app.get("/robots.txt", include_in_schema=False)
-async def robots_txt():
-    return Response(
-        content="""User-agent: *
-Allow: /
-Sitemap: https://mhjin91-docker.onrender.com/sitemap.xml
-""",
-        media_type="text/plain",
-    )
-
-
-@app.get("/sitemap.xml", include_in_schema=False)
-async def sitemap_xml():
-    xml_content = """<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    <url>
-        <loc>https://mhjin91-docker.onrender.com/</loc>
-        <changefreq>weekly</changefreq>
-        <priority>1.0</priority>
-    </url>
-</urlset>
-"""
-    return Response(
-        content=xml_content,
-        media_type="application/xml",
-    )
-
-
-# =========================
-# SVG 변환
+# Convert (🔥 핵심)
 # =========================
 @app.post("/convert", response_class=HTMLResponse)
 async def convert_images(
     request: Request,
     files: list[UploadFile] = File(...),
-    user_email: str = Form(""),
+    access_token: str = Form(""),
 ):
-    user_ip = request.client.host if request.client else "unknown"
-    today = datetime.utcnow().date()
-    normalized_email = user_email.lower().strip() if user_email else ""
+    today = datetime.utcnow().date().isoformat()
 
-    # 🔥 유효 파일만 먼저 필터
+    # 🔒 로그인 필수
+    email = await get_supabase_user_email(access_token)
+    if not email:
+        return templates.TemplateResponse(
+            "index.html",
+            {"request": request, "error": "Login required 🔒"},
+        )
+
+    is_pro = is_paid_user(email)
+
     valid_files = [f for f in files if f.filename]
 
-    if not is_paid_user(normalized_email):
-        if user_ip not in usage:
-            usage[user_ip] = {"date": today, "count": 0}
+    # 무료 제한
+    if not is_pro:
+        usage = await get_usage(email)
 
-        if usage[user_ip]["date"] != today:
-            usage[user_ip] = {"date": today, "count": 0}
+        if not usage:
+            current = 0
+        else:
+            current = 0 if usage["last_date"] != today else usage["count"]
 
-        # 🔥 여기 수정 (valid_files 기준)
-        if usage[user_ip]["count"] + len(valid_files) > 5:
+        if current + len(valid_files) > 5:
             return templates.TemplateResponse(
                 "index.html",
-                {
-                    "request": request,
-                    "results": None,
-                    "error": "Free limit reached (5/day). Upgrade to Pro 😊",
-                },
+                {"request": request, "error": "Free limit reached (5/day)"},
             )
+    else:
+        current = 0
 
     results = []
-    error = None
-    converted_count = 0  # 🔥 실제 변환된 개수
+    converted = 0
 
-    try:
-        for file in valid_files:
-            file_bytes = await file.read()
+    for file in valid_files:
+        data = await file.read()
+        if not data:
+            continue
 
-            if not file_bytes:
-                continue
+        svg = image_to_svg(data, file.filename)
 
-            svg_result = image_to_svg(file_bytes, file.filename)
+        results.append({
+            "filename": file.filename,
+            "svg_filename": file.filename + ".svg",
+            "svg": svg,
+        })
 
-            base_name = file.filename.rsplit(".", 1)[0]
-            svg_filename = f"{base_name}.svg"
+        converted += 1
 
-            results.append(
-                {
-                    "filename": file.filename,
-                    "svg_filename": svg_filename,
-                    "svg": svg_result,
-                }
-            )
-
-            converted_count += 1  # 🔥 여기 핵심
-
-        # 🔥 여기 수정 (len(files) ❌ → converted_count ✅)
-        if not is_paid_user(normalized_email):
-            usage[user_ip]["count"] += converted_count
-
-    except Exception as e:
-        error = str(e)
+    if not is_pro:
+        await upsert_usage(email, current + converted, today)
 
     return templates.TemplateResponse(
         "index.html",
-        {
-            "request": request,
-            "results": results,
-            "error": error,
-        },
+        {"request": request, "results": results},
     )
 
-# =========================
-# 다운로드
-# =========================
-@app.post("/download-svg")
-async def download_svg(
-    svg_text: str = Form(...),
-    filename: str = Form("converted.svg"),
-):
-    try:
-        if not svg_text or not svg_text.strip():
-            return Response(content="SVG content is empty", status_code=400)
-
-        # 안전한 파일명 처리
-        base_name = os.path.splitext(filename)[0] if filename else "converted"
-        safe_name = f"{base_name}.svg"
-
-        return Response(
-            content=svg_text.encode("utf-8"),
-            media_type="image/svg+xml",
-            headers={
-                "Content-Disposition": f'attachment; filename="{safe_name}"'
-            },
-        )
-
-    except Exception as e:
-        print("DOWNLOAD SVG ERROR:", repr(e))
-        return Response(content=f"Download failed: {str(e)}", status_code=500)
-
-
-@app.post("/download-all")
-async def download_all_svgs(results_json: str = Form(...)):
-    try:
-        results = json.loads(results_json)
-
-        if not results:
-            return Response("No files", status_code=400)
-
-        zip_buffer = io.BytesIO()
-
-        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-            for item in results:
-                svg = item.get("svg")
-                name = item.get("svg_filename", "converted.svg")
-
-                if not svg:
-                    continue
-
-                zip_file.writestr(name, svg)
-
-        zip_buffer.seek(0)
-
-        return Response(
-            content=zip_buffer.getvalue(),
-            media_type="application/zip",
-            headers={
-                "Content-Disposition": 'attachment; filename="converted_svgs.zip"'
-            },
-        )
-
-    except Exception as e:
-        print("ZIP ERROR:", repr(e))
-        return Response(f"ZIP failed: {str(e)}", status_code=500)
 
 # =========================
 # Stripe
@@ -279,29 +216,22 @@ async def download_all_svgs(results_json: str = Form(...)):
 @app.post("/create-checkout-session/{plan}")
 async def create_checkout_session(
     plan: str,
-    user_email: str = Form(...),
     access_token: str = Form(""),
 ):
-    verified_email = await get_supabase_user_email(access_token)
+    email = await get_supabase_user_email(access_token)
 
-    if not verified_email or verified_email != user_email.lower().strip():
-        return Response(content="Login required", status_code=401)
+    if not email:
+        return Response("Login required", status_code=401)
 
-    if plan == "monthly":
-        price_id = MONTHLY_PRICE_ID
-        mode = "subscription"
-    elif plan == "lifetime":
-        price_id = LIFETIME_PRICE_ID
-        mode = "payment"
-    else:
-        return Response(content="Invalid plan", status_code=400)
+    price_id = MONTHLY_PRICE_ID if plan == "monthly" else LIFETIME_PRICE_ID
+    mode = "subscription" if plan == "monthly" else "payment"
 
     session = stripe.checkout.Session.create(
         payment_method_types=["card"],
         line_items=[{"price": price_id, "quantity": 1}],
         mode=mode,
-        customer_email=verified_email,
-        metadata={"plan": plan, "user_email": verified_email},
+        customer_email=email,
+        metadata={"plan": plan, "user_email": email},
         success_url=f"{DOMAIN}/success",
         cancel_url=f"{DOMAIN}/",
     )
@@ -310,43 +240,27 @@ async def create_checkout_session(
 
 
 @app.post("/stripe-webhook")
-async def stripe_webhook(
-    request: Request,
-    stripe_signature: str = Header(None, alias="Stripe-Signature")
-):
+async def stripe_webhook(request: Request, stripe_signature: str = Header(None)):
     payload = await request.body()
 
-    try:
-        event = stripe.Webhook.construct_event(
-            payload,
-            stripe_signature,
-            STRIPE_WEBHOOK_SECRET,
-        )
-    except Exception:
-        return Response(status_code=400)
+    event = stripe.Webhook.construct_event(
+        payload, stripe_signature, STRIPE_WEBHOOK_SECRET
+    )
 
     if event["type"] == "checkout.session.completed":
         session = event["data"]["object"]
-
         email = session.get("customer_email")
-        plan = session.get("metadata", {}).get("plan", "unknown")
-
-        # 🔥 test 모드 처리
-        if session.get("livemode") is False:
-            # 👉 너 이메일만 허용
-            if email != "luewin96@gmail.com":
-                return Response(status_code=200)
+        plan = session.get("metadata", {}).get("plan")
 
         if email:
             add_paid_user(email, plan)
 
-        return Response(status_code=200)
+    return Response(status_code=200)
 
 
-@app.get("/success", response_class=HTMLResponse)
-async def success(request: Request):
-    return templates.TemplateResponse("success.html", {"request": request})
-
+# =========================
+# Check Pro
+# =========================
 @app.get("/check-pro")
 async def check_pro(email: str):
     return {"pro": is_paid_user(email)}
