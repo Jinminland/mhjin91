@@ -907,12 +907,9 @@ async function signUp() {
     const password = prompt("Create a password (at least 6 characters):");
     if (!password) return;
 
-    const { data, error } = await supabaseClient.auth.signUp({
+    const { error } = await supabaseClient.auth.signUp({
         email,
-        password,
-        options: {
-            emailRedirectTo: window.location.origin
-        }
+        password
     });
 
     if (error) {
@@ -920,7 +917,19 @@ async function signUp() {
         return;
     }
 
-    alert("Sign-up complete. Please check your email to confirm your account.");
+    // 🔥 바로 로그인 시도
+    const { error: loginError } = await supabaseClient.auth.signInWithPassword({
+        email,
+        password
+    });
+
+    if (loginError) {
+        alert("Login after signup failed: " + loginError.message);
+        return;
+    }
+
+    await updateAuthUI();
+    alert("Signed up & logged in!");
 }
 
 
