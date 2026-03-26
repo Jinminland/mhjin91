@@ -947,14 +947,16 @@ async function login() {
 
     if (error) {
         alert("Login failed: " + error.message);
-    } else {
-        await updateAuthUI();
-        alert("Logged in");
+        return;
     }
+
+    await updateAuthUI();
+    alert("Logged in");
 }
 
 async function logout() {
     await supabaseClient.auth.signOut();
+    await updateAuthUI();
     alert("Logged out");
 }
 async function requireLoginForCheckout(e) {
