@@ -853,10 +853,13 @@ function removeFile(btn) {
     }
 }
     async function updateAuthUI() {
+    try {
         await syncAuthToForms();
 
         const { data, error } = await supabaseClient.auth.getUser();
         const authStatus = document.getElementById("auth-status");
+
+        console.log("updateAuthUI user", data, error);
 
         if (error || !data?.user) {
             if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = true;
@@ -870,26 +873,29 @@ function removeFile(btn) {
             return;
         }
 
+        const email = data.user.email || "";
+        const res = await fetch("/check-pro?email=" + encodeURIComponent(email));
+        const result = await res.json();
 
-    const email = data.user.email || "";
-    const res = await fetch("/check-pro?email=" + encodeURIComponent(email));
-    const result = await res.json();
+        console.log("check-pro result", result);
 
-    if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = false;
-    if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = false;
+        if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = false;
+        if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = false;
 
-    if (authStatus) {
-        authStatus.textContent = result.pro
-            ? `Logged in: ${email} (PRO)`
-            : `Logged in: ${email}`;
+        if (authStatus) {
+            authStatus.textContent = result.pro
+                ? `Logged in: ${email} (PRO)`
+                : `Logged in: ${email}`;
+        }
+
+        if (signupBtn) signupBtn.style.display = "none";
+        if (loginBtn) loginBtn.style.display = "none";
+        if (logoutBtn) logoutBtn.style.display = "inline-block";
+
+        await syncAuthToForms();
+    } catch (err) {
+        console.error("updateAuthUI crashed", err);
     }
-
-
-    if (signupBtn) signupBtn.style.display = "none";
-    if (loginBtn) loginBtn.style.display = "none";
-    if (logoutBtn) logoutBtn.style.display = "inline-block";
-
-    await syncAuthToForms();
 }
 
 supabaseClient.auth.onAuthStateChange(async () => {
@@ -901,57 +907,76 @@ window.addEventListener("load", async () => {
 });
 
 async function signUp() {
-    const email = prompt("Enter your email:");
-    if (!email) return;
+    try {
+        const email = prompt("Enter your email:");
+        if (!email) return;
 
-    const password = prompt("Create a password (at least 6 characters):");
-    if (!password) return;
+        const password = prompt("Create a password (at least 6 characters):");
+        if (!password) return;
 
-    const { error } = await supabaseClient.auth.signUp({
-        email,
-        password
-    });
+        console.log("signUp start", email);
 
-    if (error) {
-        alert("Sign up failed: " + error.message);
-        return;
+        const { data, error } = await supabaseClient.auth.signUp({
+            email,
+            password
+        });
+
+        console.log("signUp result", data, error);
+
+        if (error) {
+            alert("Sign up failed: " + error.message);
+            return;
+        }
+
+        const { data: loginData, error: loginError } = await supabaseClient.auth.signInWithPassword({
+            email,
+            password
+        });
+
+        console.log("login after signup result", loginData, loginError);
+
+        if (loginError) {
+            alert("Login after signup failed: " + loginError.message);
+            return;
+        }
+
+        await updateAuthUI();
+        alert("Signed up & logged in!");
+
+    } catch (err) {
+        console.error("signUp crashed", err);
+        alert("Sign up crashed: " + err.message);
     }
-
-    // 🔥 바로 로그인 시도
-    const { error: loginError } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password
-    });
-
-    if (loginError) {
-        alert("Login after signup failed: " + loginError.message);
-        return;
-    }
-
-    await updateAuthUI();
-    alert("Signed up & logged in!");
 }
 
 
 async function login() {
-    const email = prompt("Enter your email:");
-    if (!email) return;
+    try {
+        const email = prompt("Enter your email:");
+        if (!email) return;
 
-    const password = prompt("Enter your password:");
-    if (!password) return;
+        const password = prompt("Enter your password:");
+        if (!password) return;
 
-    const { error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password
-    });
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email,
+            password
+        });
 
-    if (error) {
-        alert("Login failed: " + error.message);
-        return;
+        console.log("login result", data, error);
+
+        if (error) {
+            alert("Login failed: " + error.message);
+            return;
+        }
+
+        await updateAuthUI();
+        alert("Logged in");
+
+    } catch (err) {
+        console.error("login crashed", err);
+        alert("Login crashed: " + err.message);
     }
-
-    await updateAuthUI();
-    alert("Logged in");
 }
 
 async function logout() {
