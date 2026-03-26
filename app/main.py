@@ -150,6 +150,7 @@ async def home(request: Request):
 async def convert_images(
     request: Request,
     files: list[UploadFile] = File(...),
+    remove_whitespace: str = Form(None),
     access_token: str = Form(""),
 ):
     today = datetime.utcnow().date().isoformat()
@@ -191,7 +192,11 @@ async def convert_images(
         if not data:
             continue
 
-        svg = image_to_svg(data, file.filename)
+        svg = image_to_svg(
+            data,
+            file.filename,
+            remove_whitespace=bool(remove_whitespace)
+)
 
         results.append({
             "filename": file.filename,
