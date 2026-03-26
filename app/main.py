@@ -102,8 +102,11 @@ async def get_supabase_user_email(access_token: str | None):
 # =========================
 # usage (Supabase)
 # =========================
+from urllib.parse import quote
+
 async def get_usage(email: str):
-    url = f"{SUPABASE_URL}/rest/v1/usage_limits?email=eq.{email}"
+    safe_email = quote(email)
+    url = f"{SUPABASE_URL}/rest/v1/usage_limits?email=eq.{safe_email}"
     headers = {
         "apikey": SUPABASE_ANON_KEY,
         "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
@@ -114,7 +117,6 @@ async def get_usage(email: str):
 
     data = res.json()
     return data[0] if data else None
-
 
 async def upsert_usage(email: str, count: int, today: str):
     url = f"{SUPABASE_URL}/rest/v1/usage_limits"
