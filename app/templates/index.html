@@ -45,9 +45,9 @@
     <div class="page">
         <header class="hero">
             <div id="auth-status" style="position:absolute; top:60px; right:20px; color:white; font-size:14px; z-index:1000;"></div>
-            <div style="position:absolute; top:20px; right:20px; display:flex; gap:8px; z-index:1000;">
-                <button type="button" onclick="login()">Login</button>
-                 <button type="button" onclick="logout()">Logout</button>
+            <div id="auth-buttons" style="position:absolute; top:20px; right:20px; display:flex; gap:8px; z-index:1000;">
+                <button id="login-btn" type="button" onclick="login()">Login</button>
+                <button id="logout-btn" type="button" onclick="logout()" style="display:none;">Logout</button>
             </div>
             <div class="hero-topbar">
                 <div class="hero-text">
@@ -583,6 +583,8 @@
     const lifetimeCheckoutBtn = document.getElementById("lifetime-checkout-btn");
     const monthlyAccessTokenInput = document.getElementById("monthly_access_token");
     const lifetimeAccessTokenInput = document.getElementById("lifetime_access_token");
+    const loginBtn = document.getElementById("login-btn");
+    const logoutBtn = document.getElementById("logout-btn");
 
     function renderSelectedFiles(files) {
         if (!selectedFiles) return;
@@ -824,8 +826,13 @@ async function updateAuthUI() {
     if (error || !data?.user) {
         if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = true;
         if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = true;
+
         if (authStatus) authStatus.textContent = "Logged out";
         if (emailInput) emailInput.value = "";
+
+        if (loginBtn) loginBtn.style.display = "inline-block";
+        if (logoutBtn) logoutBtn.style.display = "none";
+
         syncEmailToCheckoutForms("");
         return;
     }
@@ -834,12 +841,17 @@ async function updateAuthUI() {
     const res = await fetch("/check-pro?email=" + encodeURIComponent(email));
     const result = await res.json();
 
-    if (result.pro) {
-        authStatus.textContent += " (PRO)";
-    }
     if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = false;
     if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = false;
-    if (authStatus) authStatus.textContent = result.pro ? `Logged in: ${email} (PRO)` : `Logged in: ${email}`;
+
+    if (authStatus) {
+        authStatus.textContent = result.pro
+            ? `Logged in: ${email} (PRO)`
+            : `Logged in: ${email}`;
+    }
+
+    if (loginBtn) loginBtn.style.display = "none";
+    if (logoutBtn) logoutBtn.style.display = "inline-block";
 
     if (emailInput) emailInput.value = email;
     syncEmailToCheckoutForms(email);
@@ -866,7 +878,7 @@ async function login() {
     if (error) {
         alert("Error: " + error.message);
     } else {
-        alert("Check your email!");
+        alert("Login link sent. Check your email!");
     }
 }
 
