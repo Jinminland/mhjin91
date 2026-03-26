@@ -46,6 +46,7 @@
         <header class="hero">
             <div id="auth-status" style="position:absolute; top:20px; right:150px; color:white; font-size:14px; z-index:1000; max-width:220px; text-align:right;"></div>
             <div id="auth-buttons" style="position:absolute; top:20px; right:20px; display:flex; gap:8px; z-index:1000;">
+                <button id="signup-btn" type="button" onclick="signUp()" data-i18n="signup_button">Sign Up</button>
                 <button id="login-btn" type="button" onclick="login()" data-i18n="login_button">Login</button>
                 <button id="logout-btn" type="button" onclick="logout()" style="display:none;" data-i18n="logout_button">Logout</button>
             </div>
@@ -351,6 +352,7 @@
             seo_step_2: "Generate SVG files from your uploaded images.",
             seo_step_3: "Preview each converted SVG in the workspace.",
             seo_step_4: "Download individual SVG files or export all as a ZIP.",
+            signup_button: "Sign Up",
             login_button: "Login",
             logout_button: "Logout",
             remove_whitespace_label: "Remove whitespace",
@@ -407,6 +409,7 @@
             seo_step_2: "업로드한 이미지로 SVG 파일을 생성하세요.",
             seo_step_3: "작업 영역에서 각 SVG를 미리보세요.",
             seo_step_4: "개별 SVG 파일 또는 전체 ZIP을 다운로드하세요.",
+            signup_button: "회원가입",
             login_button: "로그인",
             logout_button: "로그아웃",
             remove_whitespace_label: "여백 제거",
@@ -463,6 +466,7 @@
             seo_step_2: "アップロードした画像からSVGファイルを生成します。",
             seo_step_3: "ワークスペースで各SVGをプレビューします。",
             seo_step_4: "個別のSVGまたはZIP全体をダウンロードします。",
+            signup_button: "新規登録",
             login_button: "ログイン",
             logout_button: "ログアウト",
             remove_whitespace_label: "余白を削除",
@@ -519,6 +523,7 @@
             seo_step_2: "根据上传的图片生成 SVG 文件。",
             seo_step_3: "在工作区中预览每个 SVG。",
             seo_step_4: "下载单个 SVG 文件，或导出全部 ZIP。",
+            signup_button: "注册",
             login_button: "登录",
             logout_button: "退出登录",
             remove_whitespace_label: "去除空白边距",
@@ -575,6 +580,7 @@
             seo_step_2: "Générez des fichiers SVG à partir de vos images téléversées.",
             seo_step_3: "Prévisualisez chaque SVG converti dans l’espace de travail.",
             seo_step_4: "Téléchargez les fichiers SVG individuellement ou exportez tout en ZIP.",
+            signup_button: "Créer un compte",
             login_button: "Connexion",
             logout_button: "Déconnexion",
             remove_whitespace_label: "Supprimer les marges",
@@ -594,6 +600,7 @@
     const monthlyAccessTokenInput = document.getElementById("monthly_access_token");
     const lifetimeAccessTokenInput = document.getElementById("lifetime_access_token");
     const convertAccessTokenInput = document.getElementById("convert_access_token");
+    const signupBtn = document.getElementById("signup-btn");
     const loginBtn = document.getElementById("login-btn");
     const logoutBtn = document.getElementById("logout-btn");
 
@@ -857,6 +864,7 @@ function removeFile(btn) {
 
             if (authStatus) authStatus.textContent = "";
 
+            if (signupBtn) signupBtn.style.display = "inline-block";
             if (loginBtn) loginBtn.style.display = "inline-block";
             if (logoutBtn) logoutBtn.style.display = "none";
             return;
@@ -877,6 +885,7 @@ function removeFile(btn) {
     }
 
 
+    if (signupBtn) signupBtn.style.display = "none";
     if (loginBtn) loginBtn.style.display = "none";
     if (logoutBtn) logoutBtn.style.display = "inline-block";
 
@@ -891,21 +900,47 @@ window.addEventListener("load", async () => {
     await updateAuthUI();
 });
 
-async function login() {
+async function signUp() {
     const email = prompt("Enter your email:");
     if (!email) return;
 
-    const { error } = await supabaseClient.auth.signInWithOtp({
-        email: email,
+    const password = prompt("Create a password (at least 6 characters):");
+    if (!password) return;
+
+    const { data, error } = await supabaseClient.auth.signUp({
+        email,
+        password,
         options: {
             emailRedirectTo: window.location.origin
         }
     });
 
     if (error) {
-        alert("Error: " + error.message);
+        alert("Sign up failed: " + error.message);
+        return;
+    }
+
+    alert("Sign-up complete. Please check your email to confirm your account.");
+}
+
+
+async function login() {
+    const email = prompt("Enter your email:");
+    if (!email) return;
+
+    const password = prompt("Enter your password:");
+    if (!password) return;
+
+    const { error } = await supabaseClient.auth.signInWithPassword({
+        email,
+        password
+    });
+
+    if (error) {
+        alert("Login failed: " + error.message);
     } else {
-        alert("Login link sent. Check your email!");
+        await updateAuthUI();
+        alert("Logged in");
     }
 }
 
