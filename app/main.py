@@ -115,6 +115,9 @@ async def get_usage(email: str):
     async with httpx.AsyncClient() as client:
         res = await client.get(url, headers=headers)
 
+    if res.status_code >= 400:
+        raise RuntimeError(f"Supabase get_usage failed: {res.status_code} - {res.text}")
+
     data = res.json()
     return data[0] if data else None
 
@@ -134,7 +137,10 @@ async def upsert_usage(email: str, count: int, today: str):
     }
 
     async with httpx.AsyncClient() as client:
-        await client.post(url, headers=headers, json=payload)
+        res = await client.post(url, headers=headers, json=payload)
+
+    if res.status_code >= 400:
+        raise RuntimeError(f"Supabase upsert_usage failed: {res.status_code} - {res.text}")
 
 
 # =========================
@@ -155,67 +161,70 @@ async def convert_images(
     remove_whitespace: str = Form(None),
     access_token: str = Form(""),
 ):
-    today = datetime.utcnow().date().isoformat()
+    try:
+        today = datetime.utcnow().date().isoformat()
 
-    # 🔒 로그인 필수
-    email = await get_supabase_user_email(access_token)
-    if not email:
-        return templates.TemplateResponse(
-            "index.html",
-            {"request": request, "error": "Login required 🔒"},
-        )
-
-    is_pro = is_paid_user(email)
-
-    valid_files = [f for f in files if f.filename]
-
-    # 무료 제한
-    if not is_pro:
-        usage = await get_usage(email)
-
-        if not usage:
-            current = 0
-        else:
-            current = 0 if usage["last_date"] != today else usage["count"]
-
-        if current + len(valid_files) > 5:
+        email = await get_supabase_user_email(access_token)
+        if not email:
             return templates.TemplateResponse(
                 "index.html",
-                {"request": request, "error": "Free limit reached (5/day)"},
+                {"request": request, "error": "Login required 🔒"},
             )
-    else:
-        current = 0
 
-    results = []
-    converted = 0
+        is_pro = is_paid_user(email)
+        valid_files = [f for f in files if f.filename]
 
-    for file in valid_files:
-        data = await file.read()
-        if not data:
-            continue
+        if not is_pro:
+            usage = await get_usage(email)
 
-        svg = image_to_svg(
-            data,
-            file.filename,
-            remove_whitespace=bool(remove_whitespace)
-)
+            if not usage:
+                current = 0
+            else:
+                current = 0 if usage.get("last_date") != today else int(usage.get("count", 0))
 
-        results.append({
-            "filename": file.filename,
-            "svg_filename": file.filename + ".svg",
-            "svg": svg,
-        })
+            if current + len(valid_files) > 5:
+                return templates.TemplateResponse(
+                    "index.html",
+                    {"request": request, "error": "Free limit reached (5/day)"},
+                )
+        else:
+            current = 0
 
-        converted += 1
+        results = []
+        converted = 0
 
-    if not is_pro:
-        await upsert_usage(email, current + converted, today)
+        for file in valid_files:
+            data = await file.read()
+            if not data:
+                continue
 
-    return templates.TemplateResponse(
-        "index.html",
-        {"request": request, "results": results},
-    )
+            svg = image_to_svg(
+                data,
+                file.filename,
+                remove_whitespace=bool(remove_whitespace),
+            )
 
+            results.append({
+                "filename": file.filename,
+                "svg_filename": f"{file.filename}.svg",
+                "svg": svg,
+            })
+            converted += 1
+
+        if not is_pro and converted > 0:
+            await upsert_usage(email, current + converted, today)
+
+        return templates.TemplateResponse(
+            "index.html",
+            {"request": request, "results": results},
+        )
+
+    except Exception as e:
+        print("🔥 /convert error:", repr(e))
+        return templates.TemplateResponse(
+            "index.html",
+            {"request": request, "error": f"Server error: {str(e)}"},
+        )
 
 # =========================
 # Stripe
