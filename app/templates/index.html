@@ -3,22 +3,31 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Supabase Load Test</title>
+  <title>Supabase Client Test</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <h1>Supabase Load Test</h1>
+  <h1>Supabase Client Test</h1>
 
-  <button onclick="testSupabase()">Check Supabase</button>
+  <button onclick="makeClient()">Make Client</button>
 
   <script>
-    function testSupabase() {
-      if (!window.supabase) {
-        alert("window.supabase is missing");
-        return;
-      }
+    function makeClient() {
+      try {
+        const client = window.supabase.createClient(
+          "https://uqndklhxcdkoclknwohc.supabase.co",
+          "sb_publishable_g-_XiNAsgDY9uw43XVzDAA_wWMSFpga"
+        );
 
-      alert("window.supabase exists");
+        if (!client) {
+          alert("client creation failed");
+          return;
+        }
+
+        alert("client created successfully");
+      } catch (e) {
+        alert("error: " + e.message);
+      }
     }
   </script>
 </body>
