@@ -3,20 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Supabase Login Test</title>
+  <title>Supabase Auth Test</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <h1>Supabase Login Test</h1>
+  <h1>Supabase Auth Test</h1>
 
   <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
     <button onclick="signUp()">Sign Up</button>
     <button onclick="login()">Login</button>
     <button onclick="checkSession()">Check Session</button>
     <button onclick="logout()">Logout</button>
+    <button onclick="clearLog()">Clear Log</button>
   </div>
 
-  <pre id="out" style="white-space:pre-wrap; border:1px solid #ccc; padding:12px;"></pre>
+  <pre id="out" style="white-space:pre-wrap; border:1px solid #ccc; padding:12px; min-height:240px;"></pre>
 
   <script>
     const client = window.supabase.createClient(
@@ -31,6 +32,10 @@
       console.log(title, data);
     }
 
+    function clearLog() {
+      out.textContent = "";
+    }
+
     async function signUp() {
       const email = prompt("Email");
       if (!email) return;
@@ -41,9 +46,15 @@
       try {
         const res = await client.auth.signUp({ email, password });
         print("SIGN UP RESULT", res);
-        alert("signUp finished");
+
+        if (res.error) {
+          alert("Sign up failed: " + res.error.message);
+          return;
+        }
+
+        alert("Sign up success");
       } catch (e) {
-        alert("signUp error: " + e.message);
+        alert("Sign up crashed: " + e.message);
       }
     }
 
@@ -57,9 +68,15 @@
       try {
         const res = await client.auth.signInWithPassword({ email, password });
         print("LOGIN RESULT", res);
-        alert("login finished");
+
+        if (res.error) {
+          alert("Login failed: " + res.error.message);
+          return;
+        }
+
+        alert("Login success");
       } catch (e) {
-        alert("login error: " + e.message);
+        alert("Login crashed: " + e.message);
       }
     }
 
@@ -67,9 +84,19 @@
       try {
         const res = await client.auth.getSession();
         print("SESSION RESULT", res);
-        alert("checkSession finished");
+
+        if (res.error) {
+          alert("Check session failed: " + res.error.message);
+          return;
+        }
+
+        if (res.data?.session) {
+          alert("Session exists");
+        } else {
+          alert("No session");
+        }
       } catch (e) {
-        alert("checkSession error: " + e.message);
+        alert("Check session crashed: " + e.message);
       }
     }
 
@@ -77,9 +104,15 @@
       try {
         const res = await client.auth.signOut();
         print("LOGOUT RESULT", res);
-        alert("logout finished");
+
+        if (res.error) {
+          alert("Logout failed: " + res.error.message);
+          return;
+        }
+
+        alert("Logout success");
       } catch (e) {
-        alert("logout error: " + e.message);
+        alert("Logout crashed: " + e.message);
       }
     }
 
