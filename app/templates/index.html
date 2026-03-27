@@ -56,6 +56,11 @@
                 <button id="logout-btn" type="button" onclick="authLogout()" style="display:none;">Logout</button>
             </div>
 
+            <div
+                id="auth-message"
+                style="position:absolute; top:56px; right:20px; color:white; font-size:13px; z-index:1000; max-width:280px; text-align:right;"
+            ></div>
+
             <div class="hero-topbar">
                 <div class="hero-text">
                     <p class="badge">Creative Vector Studio</p>
@@ -408,7 +413,6 @@
 
     function downloadSVG(svgText, filename = "converted.svg") {
         if (!svgText) {
-            alert("SVG empty");
             return;
         }
 
@@ -460,6 +464,7 @@
     <script>
     (function () {
         const authStatus = document.getElementById("auth-status");
+        const authMessage = document.getElementById("auth-message");
         const signupBtn = document.getElementById("signup-btn");
         const loginBtn = document.getElementById("login-btn");
         const logoutBtn = document.getElementById("logout-btn");
@@ -477,6 +482,11 @@
             "sb_publishable_g-_XiNAsgDY9uw43XVzDAA_wWMSFpga"
         );
 
+        function showMessage(message) {
+            if (!authMessage) return;
+            authMessage.textContent = message || "";
+        }
+
         function setTokenInputs(token) {
             const safeToken = token || "";
             if (convertAccessTokenInput) convertAccessTokenInput.value = safeToken;
@@ -488,6 +498,7 @@
             const { data, error } = await authClient.auth.getSession();
             if (error) {
                 console.error("getSession error:", error);
+                showMessage("Session check failed.");
                 return null;
             }
             return data?.session || null;
@@ -526,20 +537,22 @@
             const password = prompt("Create a password (at least 6 characters):");
             if (!password) return;
 
+            showMessage("Signing up...");
+
             try {
                 const result = await authClient.auth.signUp({ email, password });
                 console.log("SIGNUP RESULT", result);
 
                 if (result.error) {
-                    alert("Sign up failed: " + result.error.message);
+                    showMessage("Sign up failed: " + result.error.message);
                     return;
                 }
 
-                alert("Sign up success");
+                showMessage("Sign up success");
                 await refreshAuthUI();
             } catch (err) {
                 console.error("authSignUp crashed:", err);
-                alert("Sign up crashed: " + err.message);
+                showMessage("Sign up crashed: " + err.message);
             }
         };
 
@@ -550,38 +563,42 @@
             const password = prompt("Enter your password:");
             if (!password) return;
 
+            showMessage("Logging in...");
+
             try {
                 const result = await authClient.auth.signInWithPassword({ email, password });
                 console.log("LOGIN RESULT", result);
 
                 if (result.error) {
-                    alert("Login failed: " + result.error.message);
+                    showMessage("Login failed: " + result.error.message);
                     return;
                 }
 
-                alert("Login success");
+                showMessage("Login success");
                 await refreshAuthUI();
             } catch (err) {
                 console.error("authLogin crashed:", err);
-                alert("Login crashed: " + err.message);
+                showMessage("Login crashed: " + err.message);
             }
         };
 
         window.authLogout = async function () {
+            showMessage("Logging out...");
+
             try {
                 const result = await authClient.auth.signOut();
                 console.log("LOGOUT RESULT", result);
 
                 if (result.error) {
-                    alert("Logout failed: " + result.error.message);
+                    showMessage("Logout failed: " + result.error.message);
                     return;
                 }
 
-                alert("Logged out");
+                showMessage("Logged out");
                 await refreshAuthUI();
             } catch (err) {
                 console.error("authLogout crashed:", err);
-                alert("Logout crashed: " + err.message);
+                showMessage("Logout crashed: " + err.message);
             }
         };
 
@@ -590,7 +607,7 @@
                 const session = await getSession();
                 if (!session?.user) {
                     e.preventDefault();
-                    alert("Please log in first.");
+                    showMessage("Please log in first.");
                     return;
                 }
                 setTokenInputs(session.access_token || "");
@@ -602,7 +619,7 @@
                 const session = await getSession();
                 if (!session?.user) {
                     e.preventDefault();
-                    alert("Please log in first.");
+                    showMessage("Please log in first.");
                     return;
                 }
                 setTokenInputs(session.access_token || "");
@@ -614,7 +631,7 @@
                 const session = await getSession();
                 if (!session?.user) {
                     e.preventDefault();
-                    alert("Please log in first.");
+                    showMessage("Please log in first.");
                     return;
                 }
                 setTokenInputs(session.access_token || "");
