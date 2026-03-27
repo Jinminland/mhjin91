@@ -928,21 +928,7 @@ async function signUp() {
             return;
         }
 
-        const { data: loginData, error: loginError } = await supabaseClient.auth.signInWithPassword({
-            email,
-            password
-        });
-
-        console.log("login after signup result", loginData, loginError);
-
-        if (loginError) {
-            alert("Login after signup failed: " + loginError.message);
-            return;
-        }
-
-        await updateAuthUI();
-        alert("Signed up & logged in!");
-
+        alert("Sign up success! Now log in with your email and password.");
     } catch (err) {
         console.error("signUp crashed", err);
         alert("Sign up crashed: " + err.message);
