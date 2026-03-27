@@ -915,13 +915,17 @@ async function signUp() {
         if (!password) return;
 
         console.log("signUp start", email);
+        console.log("before signUp request");
 
-        const { data, error } = await supabaseClient.auth.signUp({
+        const result = await supabaseClient.auth.signUp({
             email,
             password
         });
 
-        console.log("signUp result", data, error);
+        console.log("after signUp request");
+        console.log("signUp raw result", result);
+
+        const { data, error } = result;
 
         if (error) {
             alert("Sign up failed: " + error.message);
