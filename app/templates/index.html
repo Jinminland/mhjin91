@@ -927,14 +927,18 @@
                 return;
             }
 
-            alert("Sign up request starting...");
+            console.log("SIGNUP START");
 
-            const { data, error } = await supabaseClient.auth.signUp({
-                email,
-                password
-            });
+            const result = await Promise.race([
+                supabaseClient.auth.signUp({ email, password }),
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error("Signup timeout after 15 seconds")), 15000)
+                )
+            ]);
 
-            console.log("signUp result", { data, error });
+            console.log("SIGNUP END", result);
+
+            const { data, error } = result;
 
             if (error) {
                 alert("Sign up failed: " + error.message);
@@ -963,14 +967,18 @@
                 return;
             }
 
-            alert("Login request starting...");
+            console.log("LOGIN START");
 
-            const { data, error } = await supabaseClient.auth.signInWithPassword({
-                email,
-                password
-            });
+            const result = await Promise.race([
+                supabaseClient.auth.signInWithPassword({ email, password }),
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error("Login timeout after 15 seconds")), 15000)
+                )
+            ]);
 
-            console.log("login result", { data, error });
+            console.log("LOGIN END", result);
+
+            const { data, error } = result;
 
             if (error) {
                 alert("Login failed: " + error.message);
