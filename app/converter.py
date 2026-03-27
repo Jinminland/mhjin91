@@ -23,7 +23,12 @@ def get_potrace_path() -> str:
     )
 
 
-def image_to_svg(file_bytes: bytes, original_filename: str, fill_color: str = "black", remove_whitespace: bool = False) -> str:
+def image_to_svg(
+    file_bytes: bytes,
+    original_filename: str,
+    fill_color: str = "black",
+    remove_whitespace: bool = False
+) -> str:
     potrace_path = get_potrace_path()
 
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -41,12 +46,14 @@ def image_to_svg(file_bytes: bytes, original_filename: str, fill_color: str = "b
 
         bmp_img = background.convert("L")
 
-        # ===== 여백 제거 =====
+        # 여백 제거
         if remove_whitespace:
-            bbox = bmp_img.getbbox()
+            # 흰 배경(255)에 가까운 부분은 배경으로 보고, 나머지 기준으로 bbox 계산
+            threshold = 250
+            binary = bmp_img.point(lambda p: 0 if p > threshold else 255, mode="1")
+            bbox = binary.getbbox()
             if bbox:
                 bmp_img = bmp_img.crop(bbox)
-        # ====================
 
         bmp_img.save(bmp_path)
 

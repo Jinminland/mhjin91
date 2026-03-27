@@ -3,9 +3,10 @@ import json
 import os
 import zipfile
 from datetime import datetime
+from urllib.parse import quote
 
-import stripe
 import httpx
+import stripe
 from fastapi import FastAPI, Request, UploadFile, File, Form, Header
 from fastapi.responses import HTMLResponse, Response, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -40,7 +41,7 @@ def load_paid_users():
     try:
         with open(PAID_USERS_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
-    except:
+    except Exception:
         return {}
 
 
@@ -52,12 +53,12 @@ def save_paid_users(data):
 def is_paid_user(email: str | None):
     if not email:
         return False
+
     paid_users = load_paid_users()
     user = paid_users.get(email.lower().strip())
     if not user:
         return False
 
-    # 👉 monthly는 만료 체크
     if user.get("plan") == "monthly":
         paid_at = datetime.fromisoformat(user["paid_at"])
         days = (datetime.utcnow() - paid_at).days
@@ -80,7 +81,7 @@ def add_paid_user(email: str, plan: str):
 # Supabase 로그인 확인
 # =========================
 async def get_supabase_user_email(access_token: str | None):
-    if not access_token:
+    if not access_token or not SUPABASE_URL or not SUPABASE_ANON_KEY:
         return None
 
     url = f"{SUPABASE_URL}/auth/v1/user"
@@ -102,8 +103,6 @@ async def get_supabase_user_email(access_token: str | None):
 # =========================
 # usage (Supabase)
 # =========================
-from urllib.parse import quote
-
 async def get_usage(email: str):
     safe_email = quote(email)
     url = f"{SUPABASE_URL}/rest/v1/usage_limits?email=eq.{safe_email}"
@@ -120,6 +119,7 @@ async def get_usage(email: str):
 
     data = res.json()
     return data[0] if data else None
+
 
 async def upsert_usage(email: str, count: int, today: str):
     url = f"{SUPABASE_URL}/rest/v1/usage_limits"
@@ -151,8 +151,19 @@ async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 
+@app.get("/success", response_class=HTMLResponse)
+async def success(request: Request):
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "success_message": "Payment completed successfully! Your Pro access should now be active."
+        },
+    )
+
+
 # =========================
-# Convert (🔥 핵심)
+# Convert
 # =========================
 @app.post("/convert", response_class=HTMLResponse)
 async def convert_images(
@@ -173,6 +184,12 @@ async def convert_images(
 
         is_pro = is_paid_user(email)
         valid_files = [f for f in files if f.filename]
+
+        if not valid_files:
+            return templates.TemplateResponse(
+                "index.html",
+                {"request": request, "error": "No valid files uploaded."},
+            )
 
         if not is_pro:
             usage = await get_usage(email)
@@ -206,10 +223,16 @@ async def convert_images(
 
             results.append({
                 "filename": file.filename,
-                "svg_filename": f"{file.filename}.svg",
+                "svg_filename": f"{os.path.splitext(file.filename)[0]}.svg",
                 "svg": svg,
             })
             converted += 1
+
+        if not results:
+            return templates.TemplateResponse(
+                "index.html",
+                {"request": request, "error": "No files were converted."},
+            )
 
         if not is_pro and converted > 0:
             await upsert_usage(email, current + converted, today)
@@ -226,6 +249,33 @@ async def convert_images(
             {"request": request, "error": f"Server error: {str(e)}"},
         )
 
+
+# =========================
+# Download all
+# =========================
+@app.post("/download-all")
+async def download_all(results_json: str = Form(...)):
+    try:
+        results = json.loads(results_json)
+
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            for item in results:
+                svg_filename = item.get("svg_filename", "converted.svg")
+                svg_content = item.get("svg", "")
+                zip_file.writestr(svg_filename, svg_content)
+
+        zip_buffer.seek(0)
+
+        return Response(
+            content=zip_buffer.getvalue(),
+            media_type="application/zip",
+            headers={"Content-Disposition": "attachment; filename=svg_files.zip"},
+        )
+    except Exception as e:
+        return Response(f"ZIP download failed: {str(e)}", status_code=500)
+
+
 # =========================
 # Stripe
 # =========================
@@ -238,6 +288,9 @@ async def create_checkout_session(
 
     if not email:
         return Response("Login required", status_code=401)
+
+    if plan not in {"monthly", "lifetime"}:
+        return Response("Invalid plan", status_code=400)
 
     price_id = MONTHLY_PRICE_ID if plan == "monthly" else LIFETIME_PRICE_ID
     mode = "subscription" if plan == "monthly" else "payment"
@@ -259,16 +312,19 @@ async def create_checkout_session(
 async def stripe_webhook(request: Request, stripe_signature: str = Header(None)):
     payload = await request.body()
 
-    event = stripe.Webhook.construct_event(
-        payload, stripe_signature, STRIPE_WEBHOOK_SECRET
-    )
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, stripe_signature, STRIPE_WEBHOOK_SECRET
+        )
+    except Exception as e:
+        return Response(f"Webhook error: {str(e)}", status_code=400)
 
     if event["type"] == "checkout.session.completed":
         session = event["data"]["object"]
         email = session.get("customer_email")
         plan = session.get("metadata", {}).get("plan")
 
-        if email:
+        if email and plan:
             add_paid_user(email, plan)
 
     return Response(status_code=200)

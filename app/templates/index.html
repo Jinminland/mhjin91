@@ -45,11 +45,13 @@
     <div class="page">
         <header class="hero">
             <div id="auth-status" style="position:absolute; top:20px; right:150px; color:white; font-size:14px; z-index:1000; max-width:220px; text-align:right;"></div>
+
             <div id="auth-buttons" style="position:absolute; top:20px; right:20px; display:flex; gap:8px; z-index:1000;">
-                <button id="signup-btn" type="button" onclick="signUp()" data-i18n="signup_button">Sign Up</button>
-                <button id="login-btn" type="button" onclick="login()" data-i18n="login_button">Login</button>
-                <button id="logout-btn" type="button" onclick="logout()" style="display:none;" data-i18n="logout_button">Logout</button>
+                <button id="signup-btn" type="button" data-i18n="signup_button">Sign Up</button>
+                <button id="login-btn" type="button" data-i18n="login_button">Login</button>
+                <button id="logout-btn" type="button" style="display:none;" data-i18n="logout_button">Logout</button>
             </div>
+
             <div class="hero-topbar">
                 <div class="hero-text">
                     <p class="badge" data-i18n="badge">Creative Vector Studio</p>
@@ -75,6 +77,13 @@
         </header>
 
         <main class="container">
+            {% if success_message %}
+                <section class="card success-box" style="margin-bottom:16px; border:1px solid #35c759;">
+                    <h2>Success</h2>
+                    <p>{{ success_message }}</p>
+                </section>
+            {% endif %}
+
             <section class="card upload-card">
                 <h2 data-i18n="upload_title">Drop Your Files</h2>
                 <p class="section-desc" data-i18n="upload_desc">
@@ -107,10 +116,10 @@
                         <div id="selected-files" class="selected-files"></div>
                     </div>
 
-                        <label style="display:block; margin-top:10px;">
-                            <input type="checkbox" name="remove_whitespace">
-                            <span data-i18n="remove_whitespace_label">Remove whitespace</span>
-                        </label>
+                    <label style="display:block; margin-top:10px;">
+                        <input type="checkbox" name="remove_whitespace">
+                        <span data-i18n="remove_whitespace_label">Remove whitespace</span>
+                    </label>
 
                     <div class="form-actions">
                         <button type="submit" data-i18n="generate_button">Generate SVG Files</button>
@@ -124,7 +133,6 @@
 
                     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
                         <form id="monthly-checkout-form" action="/create-checkout-session/monthly" method="post">
-                            <input type="hidden" name="user_email" id="monthly_user_email">
                             <input type="hidden" name="access_token" id="monthly_access_token">
                             <button id="monthly-checkout-btn" type="submit" class="secondary-btn" data-i18n="monthly_button">
                                 Pro Monthly €5.99
@@ -132,7 +140,6 @@
                         </form>
 
                         <form id="lifetime-checkout-form" action="/create-checkout-session/lifetime" method="post">
-                            <input type="hidden" name="user_email" id="lifetime_user_email">
                             <input type="hidden" name="access_token" id="lifetime_access_token">
                             <button id="lifetime-checkout-btn" type="submit" class="secondary-btn" data-i18n="lifetime_button">
                                 Lifetime €39.99
@@ -214,10 +221,10 @@
                                             onclick="downloadSVG(this.closest('.file-row').dataset.svg, this.closest('.file-row').dataset.svgFilename)"
                                             data-i18n="export_svg"
                                         >
-                                        ⬇ Export SVG
+                                            ⬇ Export SVG
                                         </button>
-                                        <button type="button" class="remove-btn" onclick="removeFile(this)">❌</button>
 
+                                        <button type="button" class="remove-btn" onclick="removeFile(this)">❌</button>
                                     </div>
                                 </div>
                             {% endfor %}
@@ -298,7 +305,6 @@
 
     const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-
     const translations = {
         en: {
             page_lang: "en",
@@ -309,7 +315,6 @@
             upload_title: "Drop Your Files",
             upload_desc: "Drag, drop, and convert your artwork in just a few clicks.",
             image_files_label: "Image files",
-            email_label: "Email",
             free_limit_text: "Free: 5 conversions per day",
             monthly_button: "Pro Monthly €5.99",
             lifetime_button: "Lifetime €39.99",
@@ -324,7 +329,6 @@
             feature2_desc: "Focus on one file at a time and test colors before export.",
             feature3_title: "✦ Instant Export",
             feature3_desc: "Download a single SVG or export the whole set as a ZIP.",
-            error_title: "Error",
             collection_title: "Your SVG Collection",
             collection_desc: "{count} file(s) ready to preview and export",
             export_all_zip: "🗂 Export All as ZIP",
@@ -366,7 +370,6 @@
             upload_title: "파일 업로드",
             upload_desc: "드래그 앤 드롭으로 이미지를 빠르게 변환해보세요.",
             image_files_label: "이미지 파일",
-            email_label: "이메일",
             free_limit_text: "무료: 하루 5회 변환 가능",
             monthly_button: "월간 Pro €5.99",
             lifetime_button: "평생 이용 €39.99",
@@ -381,7 +384,6 @@
             feature2_desc: "파일별로 집중해서 보고, 내보내기 전에 색상을 테스트할 수 있습니다.",
             feature3_title: "✦ 즉시 다운로드",
             feature3_desc: "SVG 하나만 받거나 전체를 ZIP으로 한 번에 내보낼 수 있습니다.",
-            error_title: "오류",
             collection_title: "SVG 컬렉션",
             collection_desc: "미리보기와 내보내기가 가능한 파일 {count}개",
             export_all_zip: "🗂 전체 ZIP으로 내보내기",
@@ -423,7 +425,6 @@
             upload_title: "ファイルをアップロード",
             upload_desc: "ドラッグ＆ドロップで作品を数クリックで変換できます。",
             image_files_label: "画像ファイル",
-            email_label: "メールアドレス",
             free_limit_text: "無料: 1日5回まで変換可能",
             monthly_button: "月額 Pro €5.99",
             lifetime_button: "永久アクセス €39.99",
@@ -438,7 +439,6 @@
             feature2_desc: "1ファイルずつ確認しながら、書き出し前に色を試せます。",
             feature3_title: "✦ すぐに書き出し",
             feature3_desc: "単体のSVGまたはまとめてZIPでダウンロードできます。",
-            error_title: "エラー",
             collection_title: "SVGコレクション",
             collection_desc: "プレビューと書き出しの準備ができたファイル数: {count}",
             export_all_zip: "🗂 すべてZIPで書き出し",
@@ -480,7 +480,6 @@
             upload_title: "上传文件",
             upload_desc: "拖放图片，几步即可完成转换。",
             image_files_label: "图片文件",
-            email_label: "电子邮箱",
             free_limit_text: "免费：每天可转换 5 次",
             monthly_button: "月度 Pro €5.99",
             lifetime_button: "终身访问 €39.99",
@@ -495,7 +494,6 @@
             feature2_desc: "逐个查看文件，并在导出前测试颜色效果。",
             feature3_title: "✦ 即时导出",
             feature3_desc: "可下载单个 SVG，或将全部结果打包为 ZIP。",
-            error_title: "错误",
             collection_title: "你的 SVG 文件集合",
             collection_desc: "共有 {count} 个文件可预览并导出",
             export_all_zip: "🗂 全部导出为 ZIP",
@@ -537,7 +535,6 @@
             upload_title: "Déposez vos fichiers",
             upload_desc: "Glissez-déposez vos images et convertissez-les en quelques clics.",
             image_files_label: "Fichiers image",
-            email_label: "E-mail",
             free_limit_text: "Gratuit : 5 conversions par jour",
             monthly_button: "Pro mensuel €5.99",
             lifetime_button: "Accès à vie €39.99",
@@ -552,7 +549,6 @@
             feature2_desc: "Concentrez-vous sur un fichier à la fois et testez les couleurs avant l’export.",
             feature3_title: "✦ Export instantané",
             feature3_desc: "Téléchargez un seul SVG ou exportez l’ensemble en ZIP.",
-            error_title: "Erreur",
             collection_title: "Votre collection SVG",
             collection_desc: "{count} fichier(s) prêt(s) pour l’aperçu et l’export",
             export_all_zip: "🗂 Exporter tout en ZIP",
@@ -591,8 +587,6 @@
     const dropZone = document.getElementById("drop-zone");
     const selectedFiles = document.getElementById("selected-files");
     const languageSelect = document.getElementById("language-select");
-    const monthlyEmailInput = document.getElementById("monthly_user_email");
-    const lifetimeEmailInput = document.getElementById("lifetime_user_email");
     const monthlyCheckoutForm = document.getElementById("monthly-checkout-form");
     const lifetimeCheckoutForm = document.getElementById("lifetime-checkout-form");
     const monthlyCheckoutBtn = document.getElementById("monthly-checkout-btn");
@@ -603,22 +597,7 @@
     const signupBtn = document.getElementById("signup-btn");
     const loginBtn = document.getElementById("login-btn");
     const logoutBtn = document.getElementById("logout-btn");
-
-
     const convertForm = document.getElementById("convert-form");
-
-    if (convertForm) {
-        convertForm.addEventListener("submit", async (e) => {
-            await syncAuthToForms();
-
-            const { data } = await supabaseClient.auth.getUser();
-            if (!data?.user) {
-                e.preventDefault();
-                alert("Please log in first.");
-                return;
-            }
-        });
-    }
 
     function renderSelectedFiles(files) {
         if (!selectedFiles) return;
@@ -635,18 +614,25 @@
     }
 
     async function syncAuthToForms() {
-        const { data, error } = await supabaseClient.auth.getSession();
-
+        const { data } = await supabaseClient.auth.getSession();
         const session = data?.session || null;
         const token = session?.access_token || "";
-        const email = session?.user?.email || "";
 
         if (convertAccessTokenInput) convertAccessTokenInput.value = token;
         if (monthlyAccessTokenInput) monthlyAccessTokenInput.value = token;
         if (lifetimeAccessTokenInput) lifetimeAccessTokenInput.value = token;
+    }
 
-        if (monthlyEmailInput) monthlyEmailInput.value = email;
-        if (lifetimeEmailInput) lifetimeEmailInput.value = email;
+    if (convertForm) {
+        convertForm.addEventListener("submit", async (e) => {
+            await syncAuthToForms();
+
+            const { data } = await supabaseClient.auth.getSession();
+            if (!data?.session?.user) {
+                e.preventDefault();
+                alert("Please log in first.");
+            }
+        });
     }
 
     if (fileInput) {
@@ -654,7 +640,6 @@
             renderSelectedFiles(fileInput.files);
         });
     }
-
 
     if (dropZone && fileInput) {
         ["dragenter", "dragover"].forEach((eventName) => {
@@ -684,43 +669,61 @@
 
     const previewBox = document.getElementById("main-preview");
     const previewFileName = document.getElementById("preview-file-name");
-    const fileRows = document.querySelectorAll(".file-row");
     const colorButtons = document.querySelectorAll(".color-btn");
 
-    let originalSvg = fileRows.length > 0 ? fileRows[0].dataset.svg : "";
     let currentColor = "#000000";
+
+    function getFileRows() {
+        return document.querySelectorAll(".file-row");
+    }
+
+    function getActiveRow() {
+        return document.querySelector(".file-row.active");
+    }
+
+    function getCurrentSvg() {
+        const active = getActiveRow();
+        return active ? active.dataset.svg : "";
+    }
 
     function renderPreview() {
         if (!previewBox) return;
-        previewBox.innerHTML = updateSvgFill(originalSvg, currentColor);
+        const svg = getCurrentSvg();
+        previewBox.innerHTML = svg ? updateSvgFill(svg, currentColor) : "";
     }
 
-    fileRows.forEach((row) => {
-        const previewBtn = row.querySelector(".preview-btn");
+    function bindFileRowEvents() {
+        const fileRows = getFileRows();
 
-        const activateRow = () => {
-            fileRows.forEach((item) => item.classList.remove("active"));
-            row.classList.add("active");
+        fileRows.forEach((row) => {
+            if (row.dataset.bound === "1") return;
+            row.dataset.bound = "1";
 
-            originalSvg = row.dataset.svg;
-            if (previewFileName) {
-                previewFileName.textContent = row.dataset.filename;
-            }
-            renderPreview();
-        };
+            const previewBtn = row.querySelector(".preview-btn");
 
-        row.addEventListener("click", (e) => {
-            if (e.target.closest("form") || e.target.closest("button")) return;
-            activateRow();
-        });
+            const activateRow = () => {
+                getFileRows().forEach((item) => item.classList.remove("active"));
+                row.classList.add("active");
 
-        if (previewBtn) {
-            previewBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
+                if (previewFileName) {
+                    previewFileName.textContent = row.dataset.filename;
+                }
+                renderPreview();
+            };
+
+            row.addEventListener("click", (e) => {
+                if (e.target.closest("button")) return;
                 activateRow();
             });
-        }
-    });
+
+            if (previewBtn) {
+                previewBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    activateRow();
+                });
+            }
+        });
+    }
 
     colorButtons.forEach((button) => {
         button.addEventListener("click", () => {
@@ -814,184 +817,208 @@
     const savedLanguage = localStorage.getItem("siteLanguage") || "en";
     setLanguage(savedLanguage);
 
-    renderPreview();
     function downloadSVG(svgText, filename = "converted.svg") {
-    if (!svgText) {
-        alert("SVG empty");
-        return;
-    }
-
-    const blob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename.endsWith(".svg") ? filename : filename + ".svg";
-
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-
-    URL.revokeObjectURL(url);
-}
-function removeFile(btn) {
-    const row = btn.closest(".file-row");
-    row.remove();
-
-    const remaining = document.querySelectorAll(".file-row");
-
-    // 🔥 남은 파일 있으면 첫번째 자동 선택
-    if (remaining.length > 0) {
-        remaining[0].click();
-    } else {
-        // 🔥 아무것도 없으면 preview 비우기
-        const preview = document.getElementById("main-preview");
-        if (preview) preview.innerHTML = "";
-
-        const name = document.getElementById("preview-file-name");
-        if (name) name.textContent = "";
-    }
-}
-
-async function updateAuthUI() {
-    try {
-        await syncAuthToForms();
-
-        const { data, error } = await supabaseClient.auth.getUser();
-        const authStatus = document.getElementById("auth-status");
-
-        console.log("updateAuthUI user", data, error);
-
-        if (error || !data?.user) {
-            if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = true;
-            if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = true;
-
-            if (authStatus) authStatus.textContent = "";
-
-            if (signupBtn) signupBtn.style.display = "inline-block";
-            if (loginBtn) loginBtn.style.display = "inline-block";
-            if (logoutBtn) logoutBtn.style.display = "none";
+        if (!svgText) {
+            alert("SVG empty");
             return;
         }
 
-        const email = data.user.email || "";
+        const blob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
 
-        if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = false;
-        if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = false;
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename.endsWith(".svg") ? filename : filename + ".svg";
 
-        if (authStatus) {
-            authStatus.textContent = `Logged in: ${email}`;
-        }
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
 
-        if (signupBtn) signupBtn.style.display = "none";
-        if (loginBtn) loginBtn.style.display = "none";
-        if (logoutBtn) logoutBtn.style.display = "inline-block";
-
-        await syncAuthToForms();
-    } catch (err) {
-        console.error("updateAuthUI crashed", err);
+        URL.revokeObjectURL(url);
     }
-}
 
+    window.downloadSVG = downloadSVG;
 
-supabaseClient.auth.onAuthStateChange(async () => {
-    await updateAuthUI();
-});
+    function removeFile(btn) {
+        const row = btn.closest(".file-row");
+        if (!row) return;
 
-window.addEventListener("load", async () => {
-    await updateAuthUI();
-});
+        const wasActive = row.classList.contains("active");
+        row.remove();
 
-async function signUp() {
-    try {
-        const email = prompt("Enter your email:");
-        if (!email) return;
+        const remaining = getFileRows();
 
-        const password = prompt("Create a password (at least 6 characters):");
-        if (!password) return;
-
-        console.log("signUp start", email);
-        console.log("before signUp request");
-
-        const result = await supabaseClient.auth.signUp({
-            email,
-            password
-        });
-
-        console.log("after signUp request");
-        console.log("signUp raw result", result);
-
-        const { data, error } = result;
-
-        if (error) {
-            alert("Sign up failed: " + error.message);
-            return;
+        if (remaining.length > 0) {
+            if (wasActive) {
+                remaining[0].classList.add("active");
+                if (previewFileName) previewFileName.textContent = remaining[0].dataset.filename;
+                renderPreview();
+            }
+        } else {
+            if (previewBox) previewBox.innerHTML = "";
+            if (previewFileName) previewFileName.textContent = "";
         }
-
-        alert("Sign up API success");
-    } catch (err) {
-        console.error("signUp crashed", err);
-        alert("Sign up crashed: " + err.message);
     }
-}
 
-async function login() {
-    try {
-        const email = prompt("Enter your email:");
-        if (!email) return;
+    window.removeFile = removeFile;
 
-        const password = prompt("Enter your password:");
-        if (!password) return;
+    async function updateAuthUI() {
+        try {
+            await syncAuthToForms();
 
-        const { data, error } = await supabaseClient.auth.signInWithPassword({
-            email,
-            password
-        });
+            const { data, error } = await supabaseClient.auth.getSession();
+            const authStatus = document.getElementById("auth-status");
+            const session = data?.session;
 
-        console.log("login result", data, error);
+            console.log("updateAuthUI session", session, error);
 
-        if (error) {
-            alert("Login failed: " + error.message);
-            return;
+            if (error || !session?.user) {
+                if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = true;
+                if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = true;
+
+                if (authStatus) authStatus.textContent = "";
+
+                if (signupBtn) signupBtn.style.display = "inline-block";
+                if (loginBtn) loginBtn.style.display = "inline-block";
+                if (logoutBtn) logoutBtn.style.display = "none";
+                return;
+            }
+
+            const email = session.user.email || "";
+
+            if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = false;
+            if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = false;
+
+            if (authStatus) {
+                authStatus.textContent = `Logged in: ${email}`;
+            }
+
+            if (signupBtn) signupBtn.style.display = "none";
+            if (loginBtn) loginBtn.style.display = "none";
+            if (logoutBtn) logoutBtn.style.display = "inline-block";
+
+            await syncAuthToForms();
+        } catch (err) {
+            console.error("updateAuthUI crashed", err);
         }
+    }
 
-        alert("Login API success");
-
-        const sessionResult = await supabaseClient.auth.getSession();
-        console.log("session after login", sessionResult);
-
+    supabaseClient.auth.onAuthStateChange(async () => {
         await updateAuthUI();
-        alert("Logged in");
-    } catch (err) {
-        console.error("login crashed", err);
-        alert("Login crashed: " + err.message);
+    });
+
+    window.addEventListener("load", async () => {
+        bindFileRowEvents();
+        renderPreview();
+        await updateAuthUI();
+    });
+
+    async function signUp() {
+        try {
+            const email = prompt("Enter your email:");
+            if (!email) {
+                alert("Email input cancelled.");
+                return;
+            }
+
+            const password = prompt("Create a password (at least 6 characters):");
+            if (!password) {
+                alert("Password input cancelled.");
+                return;
+            }
+
+            alert("Sign up request starting...");
+
+            const { data, error } = await supabaseClient.auth.signUp({
+                email,
+                password
+            });
+
+            console.log("signUp result", { data, error });
+
+            if (error) {
+                alert("Sign up failed: " + error.message);
+                return;
+            }
+
+            alert("Sign up success");
+            await updateAuthUI();
+        } catch (err) {
+            console.error("signUp crashed", err);
+            alert("Sign up crashed: " + err.message);
+        }
     }
-}
 
-async function logout() {
-    await supabaseClient.auth.signOut();
-    await updateAuthUI();
-    alert("Logged out");
-}
-async function requireLoginForCheckout(e) {
-    const { data } = await supabaseClient.auth.getUser();
+    async function login() {
+        try {
+            const email = prompt("Enter your email:");
+            if (!email) {
+                alert("Email input cancelled.");
+                return;
+            }
 
-    if (!data?.user) {
-        e.preventDefault();
-        alert("Please log in first.");
-        return;
+            const password = prompt("Enter your password:");
+            if (!password) {
+                alert("Password input cancelled.");
+                return;
+            }
+
+            alert("Login request starting...");
+
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email,
+                password
+            });
+
+            console.log("login result", { data, error });
+
+            if (error) {
+                alert("Login failed: " + error.message);
+                return;
+            }
+
+            alert("Login success");
+            await updateAuthUI();
+        } catch (err) {
+            console.error("login crashed", err);
+            alert("Login crashed: " + err.message);
+        }
     }
 
-    await syncAuthToForms();
-}
+    async function logout() {
+        try {
+            await supabaseClient.auth.signOut();
+            await updateAuthUI();
+            alert("Logged out");
+        } catch (err) {
+            console.error("logout crashed", err);
+            alert("Logout crashed: " + err.message);
+        }
+    }
 
-if (monthlyCheckoutForm) {
-    monthlyCheckoutForm.addEventListener("submit", requireLoginForCheckout);
-}
+    async function requireLoginForCheckout(e) {
+        const { data } = await supabaseClient.auth.getSession();
 
-if (lifetimeCheckoutForm) {
-    lifetimeCheckoutForm.addEventListener("submit", requireLoginForCheckout);
-}
+        if (!data?.session?.user) {
+            e.preventDefault();
+            alert("Please log in first.");
+            return;
+        }
+
+        await syncAuthToForms();
+    }
+
+    if (signupBtn) signupBtn.addEventListener("click", signUp);
+    if (loginBtn) loginBtn.addEventListener("click", login);
+    if (logoutBtn) logoutBtn.addEventListener("click", logout);
+
+    if (monthlyCheckoutForm) {
+        monthlyCheckoutForm.addEventListener("submit", requireLoginForCheckout);
+    }
+
+    if (lifetimeCheckoutForm) {
+        lifetimeCheckoutForm.addEventListener("submit", requireLoginForCheckout);
+    }
     </script>
 </body>
 </html>
