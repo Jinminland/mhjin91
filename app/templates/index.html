@@ -487,6 +487,14 @@
             authMessage.textContent = message || "";
         }
 
+        function setButtonsDisabled(disabled) {
+            if (signupBtn) signupBtn.disabled = disabled;
+            if (loginBtn) loginBtn.disabled = disabled;
+            if (logoutBtn) logoutBtn.disabled = disabled;
+            if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = disabled || monthlyCheckoutBtn.disabled;
+            if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = disabled || lifetimeCheckoutBtn.disabled;
+        }
+
         function setTokenInputs(token) {
             const safeToken = token || "";
             if (convertAccessTokenInput) convertAccessTokenInput.value = safeToken;
@@ -494,14 +502,34 @@
             if (lifetimeAccessTokenInput) lifetimeAccessTokenInput.value = safeToken;
         }
 
+        async function withTimeout(promise, label, ms = 15000) {
+            return Promise.race([
+                promise,
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error(label + " timed out after 15 seconds")), ms)
+                )
+            ]);
+        }
+
         async function getSession() {
-            const { data, error } = await authClient.auth.getSession();
-            if (error) {
-                console.error("getSession error:", error);
-                showMessage("Session check failed.");
+            try {
+                const { data, error } = await withTimeout(
+                    authClient.auth.getSession(),
+                    "Session check"
+                );
+
+                if (error) {
+                    console.error("getSession error:", error);
+                    showMessage("Session check failed.");
+                    return null;
+                }
+
+                return data?.session || null;
+            } catch (err) {
+                console.error("getSession crashed:", err);
+                showMessage(err.message);
                 return null;
             }
-            return data?.session || null;
         }
 
         async function refreshAuthUI() {
@@ -527,6 +555,7 @@
             if (logoutBtn) logoutBtn.style.display = "inline-block";
             if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = false;
             if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = false;
+
             setTokenInputs(token);
         }
 
@@ -538,9 +567,14 @@
             if (!password) return;
 
             showMessage("Signing up...");
+            setButtonsDisabled(true);
 
             try {
-                const result = await authClient.auth.signUp({ email, password });
+                const result = await withTimeout(
+                    authClient.auth.signUp({ email, password }),
+                    "Sign up"
+                );
+
                 console.log("SIGNUP RESULT", result);
 
                 if (result.error) {
@@ -552,7 +586,10 @@
                 await refreshAuthUI();
             } catch (err) {
                 console.error("authSignUp crashed:", err);
-                showMessage("Sign up crashed: " + err.message);
+                showMessage(err.message);
+            } finally {
+                setButtonsDisabled(false);
+                await refreshAuthUI();
             }
         };
 
@@ -564,9 +601,14 @@
             if (!password) return;
 
             showMessage("Logging in...");
+            setButtonsDisabled(true);
 
             try {
-                const result = await authClient.auth.signInWithPassword({ email, password });
+                const result = await withTimeout(
+                    authClient.auth.signInWithPassword({ email, password }),
+                    "Login"
+                );
+
                 console.log("LOGIN RESULT", result);
 
                 if (result.error) {
@@ -578,15 +620,23 @@
                 await refreshAuthUI();
             } catch (err) {
                 console.error("authLogin crashed:", err);
-                showMessage("Login crashed: " + err.message);
+                showMessage(err.message);
+            } finally {
+                setButtonsDisabled(false);
+                await refreshAuthUI();
             }
         };
 
         window.authLogout = async function () {
             showMessage("Logging out...");
+            setButtonsDisabled(true);
 
             try {
-                const result = await authClient.auth.signOut();
+                const result = await withTimeout(
+                    authClient.auth.signOut(),
+                    "Logout"
+                );
+
                 console.log("LOGOUT RESULT", result);
 
                 if (result.error) {
@@ -598,7 +648,10 @@
                 await refreshAuthUI();
             } catch (err) {
                 console.error("authLogout crashed:", err);
-                showMessage("Logout crashed: " + err.message);
+                showMessage(err.message);
+            } finally {
+                setButtonsDisabled(false);
+                await refreshAuthUI();
             }
         };
 
