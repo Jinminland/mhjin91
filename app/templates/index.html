@@ -3,32 +3,89 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Supabase Client Test</title>
+  <title>Supabase Login Test</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <h1>Supabase Client Test</h1>
+  <h1>Supabase Login Test</h1>
 
-  <button onclick="makeClient()">Make Client</button>
+  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+    <button onclick="signUp()">Sign Up</button>
+    <button onclick="login()">Login</button>
+    <button onclick="checkSession()">Check Session</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+
+  <pre id="out" style="white-space:pre-wrap; border:1px solid #ccc; padding:12px;"></pre>
 
   <script>
-    function makeClient() {
+    const client = window.supabase.createClient(
+      "https://uqndklhxcdkoclknwohc.supabase.co",
+      "sb_publishable_g-_XiNAsgDY9uw43XVzDAA_wWMSFpga"
+    );
+
+    const out = document.getElementById("out");
+
+    function print(title, data) {
+      out.textContent += `${title}\n${JSON.stringify(data, null, 2)}\n\n`;
+      console.log(title, data);
+    }
+
+    async function signUp() {
+      const email = prompt("Email");
+      if (!email) return;
+
+      const password = prompt("Password");
+      if (!password) return;
+
       try {
-        const client = window.supabase.createClient(
-          "https://uqndklhxcdkoclknwohc.supabase.co",
-          "sb_publishable_g-_XiNAsgDY9uw43XVzDAA_wWMSFpga"
-        );
-
-        if (!client) {
-          alert("client creation failed");
-          return;
-        }
-
-        alert("client created successfully");
+        const res = await client.auth.signUp({ email, password });
+        print("SIGN UP RESULT", res);
+        alert("signUp finished");
       } catch (e) {
-        alert("error: " + e.message);
+        alert("signUp error: " + e.message);
       }
     }
+
+    async function login() {
+      const email = prompt("Email");
+      if (!email) return;
+
+      const password = prompt("Password");
+      if (!password) return;
+
+      try {
+        const res = await client.auth.signInWithPassword({ email, password });
+        print("LOGIN RESULT", res);
+        alert("login finished");
+      } catch (e) {
+        alert("login error: " + e.message);
+      }
+    }
+
+    async function checkSession() {
+      try {
+        const res = await client.auth.getSession();
+        print("SESSION RESULT", res);
+        alert("checkSession finished");
+      } catch (e) {
+        alert("checkSession error: " + e.message);
+      }
+    }
+
+    async function logout() {
+      try {
+        const res = await client.auth.signOut();
+        print("LOGOUT RESULT", res);
+        alert("logout finished");
+      } catch (e) {
+        alert("logout error: " + e.message);
+      }
+    }
+
+    client.auth.onAuthStateChange((event, session) => {
+      print("AUTH STATE CHANGED", { event, session });
+    });
   </script>
 </body>
 </html>
