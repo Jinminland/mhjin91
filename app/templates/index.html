@@ -3,31 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Button Test</title>
+  <title>Supabase Load Test</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <h1>Button Test</h1>
+  <h1>Supabase Load Test</h1>
 
-  <button onclick="test1()">Sign Up</button>
-  <button onclick="test2()">Login</button>
-  <button onclick="test3()">Check Session</button>
-  <button onclick="test4()">Logout</button>
+  <button onclick="testSupabase()">Check Supabase</button>
 
   <script>
-    function test1() {
-      alert("Sign Up button works");
-    }
+    function testSupabase() {
+      if (!window.supabase) {
+        alert("window.supabase is missing");
+        return;
+      }
 
-    function test2() {
-      alert("Login button works");
-    }
-
-    function test3() {
-      alert("Check Session button works");
-    }
-
-    function test4() {
-      alert("Logout button works");
+      alert("window.supabase exists");
     }
   </script>
 </body>
