@@ -3,78 +3,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Auth Test</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>Button Test</title>
 </head>
 <body>
-  <h1>Auth Test</h1>
+  <h1>Button Test</h1>
 
-  <div style="display:flex; gap:8px; margin-bottom:12px;">
-    <button id="signupBtn">Sign Up</button>
-    <button id="loginBtn">Login</button>
-    <button id="checkBtn">Check Session</button>
-    <button id="logoutBtn">Logout</button>
-  </div>
-
-  <pre id="out" style="white-space:pre-wrap; border:1px solid #ccc; padding:12px;"></pre>
+  <button onclick="test1()">Sign Up</button>
+  <button onclick="test2()">Login</button>
+  <button onclick="test3()">Check Session</button>
+  <button onclick="test4()">Logout</button>
 
   <script>
-    const out = document.getElementById("out");
-
-    const supabase = window.supabase.createClient(
-      "https://uqndklhxcdkoclknwohc.supabase.co",
-      "sb_publishable_g-_XiNAsgDY9uw43XVzDAA_wWMSFpga"
-    );
-
-    function log(...args) {
-      console.log(...args);
-      out.textContent += args.map(v => typeof v === "string" ? v : JSON.stringify(v, null, 2)).join(" ") + "\n\n";
+    function test1() {
+      alert("Sign Up button works");
     }
 
-    async function showSession() {
-      const { data, error } = await supabase.auth.getSession();
-      log("getSession()", { data, error });
+    function test2() {
+      alert("Login button works");
     }
 
-    document.getElementById("signupBtn").addEventListener("click", async () => {
-      const email = prompt("email");
-      if (!email) return;
+    function test3() {
+      alert("Check Session button works");
+    }
 
-      const password = prompt("password");
-      if (!password) return;
-
-      const res = await supabase.auth.signUp({ email, password });
-      log("signUp()", res);
-      await showSession();
-    });
-
-    document.getElementById("loginBtn").addEventListener("click", async () => {
-      const email = prompt("email");
-      if (!email) return;
-
-      const password = prompt("password");
-      if (!password) return;
-
-      const res = await supabase.auth.signInWithPassword({ email, password });
-      log("signInWithPassword()", res);
-      await showSession();
-    });
-
-    document.getElementById("checkBtn").addEventListener("click", async () => {
-      await showSession();
-    });
-
-    document.getElementById("logoutBtn").addEventListener("click", async () => {
-      const res = await supabase.auth.signOut();
-      log("signOut()", res);
-      await showSession();
-    });
-
-    supabase.auth.onAuthStateChange((event, session) => {
-      log("onAuthStateChange()", { event, session });
-    });
-
-    showSession();
+    function test4() {
+      alert("Logout button works");
+    }
   </script>
 </body>
 </html>
