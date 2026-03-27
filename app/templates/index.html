@@ -852,7 +852,8 @@ function removeFile(btn) {
         if (name) name.textContent = "";
     }
 }
-    async function updateAuthUI() {
+
+async function updateAuthUI() {
     try {
         await syncAuthToForms();
 
@@ -874,18 +875,12 @@ function removeFile(btn) {
         }
 
         const email = data.user.email || "";
-        const res = await fetch("/check-pro?email=" + encodeURIComponent(email));
-        const result = await res.json();
-
-        console.log("check-pro result", result);
 
         if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = false;
         if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = false;
 
         if (authStatus) {
-            authStatus.textContent = result.pro
-                ? `Logged in: ${email} (PRO)`
-                : `Logged in: ${email}`;
+            authStatus.textContent = `Logged in: ${email}`;
         }
 
         if (signupBtn) signupBtn.style.display = "none";
@@ -897,6 +892,7 @@ function removeFile(btn) {
         console.error("updateAuthUI crashed", err);
     }
 }
+
 
 supabaseClient.auth.onAuthStateChange(async () => {
     await updateAuthUI();
@@ -932,13 +928,12 @@ async function signUp() {
             return;
         }
 
-        alert("Sign up success! Now log in with your email and password.");
+        alert("Sign up API success");
     } catch (err) {
         console.error("signUp crashed", err);
         alert("Sign up crashed: " + err.message);
     }
 }
-
 
 async function login() {
     try {
@@ -960,9 +955,13 @@ async function login() {
             return;
         }
 
+        alert("Login API success");
+
+        const sessionResult = await supabaseClient.auth.getSession();
+        console.log("session after login", sessionResult);
+
         await updateAuthUI();
         alert("Logged in");
-
     } catch (err) {
         console.error("login crashed", err);
         alert("Login crashed: " + err.message);
