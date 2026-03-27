@@ -598,6 +598,11 @@
     const loginBtn = document.getElementById("login-btn");
     const logoutBtn = document.getElementById("logout-btn");
     const convertForm = document.getElementById("convert-form");
+    const previewBox = document.getElementById("main-preview");
+    const previewFileName = document.getElementById("preview-file-name");
+    const colorButtons = document.querySelectorAll(".color-btn");
+
+    let currentColor = "#000000";
 
     function renderSelectedFiles(files) {
         if (!selectedFiles) return;
@@ -608,14 +613,22 @@
         }
 
         const names = Array.from(files).map(
-            file => `<span class="selected-file-chip">${file.name}</span>`
+            (file) => `<span class="selected-file-chip">${file.name}</span>`
         );
         selectedFiles.innerHTML = names.join("");
     }
 
+    async function getCurrentSession() {
+        const { data, error } = await supabaseClient.auth.getSession();
+        if (error) {
+            console.error("getCurrentSession error:", error);
+            return null;
+        }
+        return data?.session || null;
+    }
+
     async function syncAuthToForms() {
-        const { data } = await supabaseClient.auth.getSession();
-        const session = data?.session || null;
+        const session = await getCurrentSession();
         const token = session?.access_token || "";
 
         if (convertAccessTokenInput) convertAccessTokenInput.value = token;
@@ -623,12 +636,58 @@
         if (lifetimeAccessTokenInput) lifetimeAccessTokenInput.value = token;
     }
 
+    async function updateAuthUI() {
+        try {
+            const authStatus = document.getElementById("auth-status");
+            const session = await getCurrentSession();
+
+            console.log("updateAuthUI session:", session);
+
+            if (!session || !session.user) {
+                if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = true;
+                if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = true;
+
+                if (authStatus) authStatus.textContent = "";
+
+                if (signupBtn) signupBtn.style.display = "inline-block";
+                if (loginBtn) loginBtn.style.display = "inline-block";
+                if (logoutBtn) logoutBtn.style.display = "none";
+
+                if (convertAccessTokenInput) convertAccessTokenInput.value = "";
+                if (monthlyAccessTokenInput) monthlyAccessTokenInput.value = "";
+                if (lifetimeAccessTokenInput) lifetimeAccessTokenInput.value = "";
+
+                return;
+            }
+
+            const email = session.user.email || "";
+            const token = session.access_token || "";
+
+            if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = false;
+            if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = false;
+
+            if (authStatus) {
+                authStatus.textContent = `Logged in: ${email}`;
+            }
+
+            if (signupBtn) signupBtn.style.display = "none";
+            if (loginBtn) loginBtn.style.display = "none";
+            if (logoutBtn) logoutBtn.style.display = "inline-block";
+
+            if (convertAccessTokenInput) convertAccessTokenInput.value = token;
+            if (monthlyAccessTokenInput) monthlyAccessTokenInput.value = token;
+            if (lifetimeAccessTokenInput) lifetimeAccessTokenInput.value = token;
+        } catch (err) {
+            console.error("updateAuthUI crashed", err);
+        }
+    }
+
     if (convertForm) {
         convertForm.addEventListener("submit", async (e) => {
             await syncAuthToForms();
 
-            const { data } = await supabaseClient.auth.getSession();
-            if (!data?.session?.user) {
+            const session = await getCurrentSession();
+            if (!session?.user) {
                 e.preventDefault();
                 alert("Please log in first.");
             }
@@ -666,12 +725,6 @@
     function updateSvgFill(svgText, color) {
         return svgText.replace(/fill="[^"]*"/g, `fill="${color}"`);
     }
-
-    const previewBox = document.getElementById("main-preview");
-    const previewFileName = document.getElementById("preview-file-name");
-    const colorButtons = document.querySelectorAll(".color-btn");
-
-    let currentColor = "#000000";
 
     function getFileRows() {
         return document.querySelectorAll(".file-row");
@@ -862,48 +915,8 @@
 
     window.removeFile = removeFile;
 
-    async function updateAuthUI() {
-        try {
-            await syncAuthToForms();
-
-            const { data, error } = await supabaseClient.auth.getSession();
-            const authStatus = document.getElementById("auth-status");
-            const session = data?.session;
-
-            console.log("updateAuthUI session", session, error);
-
-            if (error || !session?.user) {
-                if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = true;
-                if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = true;
-
-                if (authStatus) authStatus.textContent = "";
-
-                if (signupBtn) signupBtn.style.display = "inline-block";
-                if (loginBtn) loginBtn.style.display = "inline-block";
-                if (logoutBtn) logoutBtn.style.display = "none";
-                return;
-            }
-
-            const email = session.user.email || "";
-
-            if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = false;
-            if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = false;
-
-            if (authStatus) {
-                authStatus.textContent = `Logged in: ${email}`;
-            }
-
-            if (signupBtn) signupBtn.style.display = "none";
-            if (loginBtn) loginBtn.style.display = "none";
-            if (logoutBtn) logoutBtn.style.display = "inline-block";
-
-            await syncAuthToForms();
-        } catch (err) {
-            console.error("updateAuthUI crashed", err);
-        }
-    }
-
-    supabaseClient.auth.onAuthStateChange(async () => {
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+        console.log("onAuthStateChange:", event, session);
         await updateAuthUI();
     });
 
@@ -986,7 +999,7 @@
             }
 
             alert("Login success");
-            await updateAuthUI();
+            window.location.reload();
         } catch (err) {
             console.error("login crashed", err);
             alert("Login crashed: " + err.message);
@@ -998,6 +1011,7 @@
             await supabaseClient.auth.signOut();
             await updateAuthUI();
             alert("Logged out");
+            window.location.reload();
         } catch (err) {
             console.error("logout crashed", err);
             alert("Logout crashed: " + err.message);
@@ -1005,9 +1019,9 @@
     }
 
     async function requireLoginForCheckout(e) {
-        const { data } = await supabaseClient.auth.getSession();
+        const session = await getCurrentSession();
 
-        if (!data?.session?.user) {
+        if (!session?.user) {
             e.preventDefault();
             alert("Please log in first.");
             return;
