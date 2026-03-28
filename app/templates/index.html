@@ -825,11 +825,9 @@
 
         async function fetchMyPlanStatus() {
             if (!currentSession?.access_token) {
-                if (planStatusBadge) {
-                    planStatusBadge.style.display = "none";
-                    planStatusBadge.textContent = "";
-                    planStatusBadge.className = "plan-status-badge";
-                }
+                planStatusBadge.style.display = "inline-flex";
+                planStatusBadge.textContent = "Free";
+                planStatusBadge.className = "plan-status-badge free";
                 return;
             }
 
@@ -870,6 +868,15 @@
                     planStatusBadge.textContent = "";
                     planStatusBadge.className = "plan-status-badge";
                 }
+            }
+        }
+
+        // ⭐ 결제 후 플랜 자동 갱신
+        async function refreshPlanAfterPayment() {
+            if (window.location.pathname.includes("success")) {
+                console.log("💸 payment success → refreshing plan...");
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                await fetchMyPlanStatus();
             }
         }
 
@@ -1272,6 +1279,9 @@
             currentSession = null;
             renderAuthUI();
             setEyeIcon(false);
+
+            await refreshPlanAfterPayment();
+
         });
     })();
     </script>
