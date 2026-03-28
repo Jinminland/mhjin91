@@ -23,8 +23,8 @@ stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
 
 MONTHLY_PRICE_ID = "price_1TFwYqD81fl2f5zCibHk3VA7"
-# LIFETIME_PRICE_ID = "price_1TFwY1D81fl2f5zCo6E0H0oQ"
-LIFETIME_PRICE_ID = "price_1TFxWcD81fl2f5zCqBaGBopV"
+LIFETIME_PRICE_ID = "price_1TFwY1D81fl2f5zCo6E0H0oQ"
+# LIFETIME_PRICE_ID = "price_1TFxWcD81fl2f5zCqBaGBopV"
 DOMAIN = "https://mhjin91-docker.onrender.com"
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
