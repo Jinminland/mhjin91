@@ -458,7 +458,7 @@
         renderPreview();
     });
     </script>
-
+    
     <script>
     (function () {
         const authStatus = document.getElementById("auth-status");
@@ -488,6 +488,9 @@
             }
         );
 
+        let authReady = false;
+        let currentSession = null;
+
         function showMessage(message) {
             if (!authMessage) return;
             authMessage.textContent = message || "";
@@ -506,43 +509,11 @@
             if (logoutBtn) logoutBtn.disabled = disabled;
         }
 
-        async function withTimeout(promise, label, ms = 15000) {
-            return Promise.race([
-                promise,
-                new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error(`${label} timed out after 15 seconds`)), ms)
-                )
-            ]);
-        }
-
-        async function getSession() {
-            try {
-                const { data, error } = await withTimeout(
-                    authClient.auth.getSession(),
-                    "Session check"
-                );
-
-                if (error) {
-                    console.error("getSession error:", error);
-                    showMessage("Session check failed.");
-                    return null;
-                }
-
-                return data?.session || null;
-            } catch (err) {
-                console.error("getSession crashed:", err);
-                showMessage(err.message);
-                return null;
-            }
-        }
-
-        async function refreshAuthUI() {
-            const session = await getSession();
-
+        function renderAuthUI() {
             if (authButtons) authButtons.style.display = "flex";
             if (authStatus) authStatus.style.display = "block";
 
-            if (!session || !session.user) {
+            if (!authReady) {
                 if (authStatus) authStatus.textContent = "";
                 if (signupBtn) signupBtn.style.display = "inline-block";
                 if (loginBtn) loginBtn.style.display = "inline-block";
@@ -550,11 +521,24 @@
                 if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = true;
                 if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = true;
                 setTokenInputs("");
+                showMessage("Checking session...");
                 return;
             }
 
-            const email = session.user.email || "";
-            const token = session.access_token || "";
+            if (!currentSession || !currentSession.user) {
+                if (authStatus) authStatus.textContent = "";
+                if (signupBtn) signupBtn.style.display = "inline-block";
+                if (loginBtn) loginBtn.style.display = "inline-block";
+                if (logoutBtn) logoutBtn.style.display = "none";
+                if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = true;
+                if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = true;
+                setTokenInputs("");
+                showMessage("");
+                return;
+            }
+
+            const email = currentSession.user.email || "";
+            const token = currentSession.access_token || "";
 
             if (authStatus) authStatus.textContent = `Logged in: ${email}`;
             if (signupBtn) signupBtn.style.display = "none";
@@ -563,6 +547,28 @@
             if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = false;
             if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = false;
             setTokenInputs(token);
+            showMessage("");
+        }
+
+        function waitForAuthReady(timeoutMs = 15000) {
+            if (authReady) return Promise.resolve();
+
+            return new Promise((resolve, reject) => {
+                const started = Date.now();
+
+                const timer = setInterval(() => {
+                    if (authReady) {
+                        clearInterval(timer);
+                        resolve();
+                        return;
+                    }
+
+                    if (Date.now() - started > timeoutMs) {
+                        clearInterval(timer);
+                        reject(new Error("Session check timed out after 15 seconds"));
+                    }
+                }, 100);
+            });
         }
 
         window.authSignUp = async function () {
@@ -576,11 +582,7 @@
             setButtonsDisabled(true);
 
             try {
-                const result = await withTimeout(
-                    authClient.auth.signUp({ email, password }),
-                    "Sign up"
-                );
-
+                const result = await authClient.auth.signUp({ email, password });
                 console.log("SIGNUP RESULT", result);
 
                 if (result.error) {
@@ -589,13 +591,11 @@
                 }
 
                 showMessage("Sign up success");
-                await refreshAuthUI();
             } catch (err) {
                 console.error("authSignUp crashed:", err);
-                showMessage(err.message);
+                showMessage("Sign up crashed: " + err.message);
             } finally {
                 setButtonsDisabled(false);
-                await refreshAuthUI();
             }
         };
 
@@ -610,11 +610,7 @@
             setButtonsDisabled(true);
 
             try {
-                const result = await withTimeout(
-                    authClient.auth.signInWithPassword({ email, password }),
-                    "Login"
-                );
-
+                const result = await authClient.auth.signInWithPassword({ email, password });
                 console.log("LOGIN RESULT", result);
 
                 if (result.error) {
@@ -622,14 +618,15 @@
                     return;
                 }
 
+                currentSession = result.data?.session || null;
+                authReady = true;
+                renderAuthUI();
                 showMessage("Login success");
-                await refreshAuthUI();
             } catch (err) {
                 console.error("authLogin crashed:", err);
-                showMessage(err.message);
+                showMessage("Login crashed: " + err.message);
             } finally {
                 setButtonsDisabled(false);
-                await refreshAuthUI();
             }
         };
 
@@ -638,11 +635,7 @@
             setButtonsDisabled(true);
 
             try {
-                const result = await withTimeout(
-                    authClient.auth.signOut(),
-                    "Logout"
-                );
-
+                const result = await authClient.auth.signOut();
                 console.log("LOGOUT RESULT", result);
 
                 if (result.error) {
@@ -650,14 +643,15 @@
                     return;
                 }
 
+                currentSession = null;
+                authReady = true;
+                renderAuthUI();
                 showMessage("Logged out");
-                await refreshAuthUI();
             } catch (err) {
                 console.error("authLogout crashed:", err);
-                showMessage(err.message);
+                showMessage("Logout crashed: " + err.message);
             } finally {
                 setButtonsDisabled(false);
-                await refreshAuthUI();
             }
         };
 
@@ -665,13 +659,19 @@
             convertForm.addEventListener("submit", async function (e) {
                 e.preventDefault();
 
-                const session = await getSession();
-                if (!session?.user) {
+                try {
+                    await waitForAuthReady();
+                } catch (err) {
+                    showMessage(err.message);
+                    return;
+                }
+
+                if (!currentSession?.user) {
                     showMessage("Please log in first.");
                     return;
                 }
 
-                setTokenInputs(session.access_token || "");
+                setTokenInputs(currentSession.access_token || "");
                 showMessage("Converting...");
                 convertForm.submit();
             });
@@ -681,13 +681,19 @@
             monthlyCheckoutForm.addEventListener("submit", async function (e) {
                 e.preventDefault();
 
-                const session = await getSession();
-                if (!session?.user) {
+                try {
+                    await waitForAuthReady();
+                } catch (err) {
+                    showMessage(err.message);
+                    return;
+                }
+
+                if (!currentSession?.user) {
                     showMessage("Please log in first.");
                     return;
                 }
 
-                setTokenInputs(session.access_token || "");
+                setTokenInputs(currentSession.access_token || "");
                 monthlyCheckoutForm.submit();
             });
         }
@@ -696,26 +702,37 @@
             lifetimeCheckoutForm.addEventListener("submit", async function (e) {
                 e.preventDefault();
 
-                const session = await getSession();
-                if (!session?.user) {
+                try {
+                    await waitForAuthReady();
+                } catch (err) {
+                    showMessage(err.message);
+                    return;
+                }
+
+                if (!currentSession?.user) {
                     showMessage("Please log in first.");
                     return;
                 }
 
-                setTokenInputs(session.access_token || "");
+                setTokenInputs(currentSession.access_token || "");
                 lifetimeCheckoutForm.submit();
             });
         }
 
-        authClient.auth.onAuthStateChange(async function (event, session) {
+        authClient.auth.onAuthStateChange(function (event, session) {
             console.log("AUTH STATE CHANGED", event, session);
-            await refreshAuthUI();
+            currentSession = session || null;
+
+            if (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "TOKEN_REFRESHED") {
+                authReady = true;
+                renderAuthUI();
+            }
         });
 
-        window.addEventListener("load", async function () {
-            showMessage("Checking session...");
-            await refreshAuthUI();
-            showMessage("");
+        window.addEventListener("load", function () {
+            authReady = false;
+            currentSession = null;
+            renderAuthUI();
         });
     })();
     </script>
