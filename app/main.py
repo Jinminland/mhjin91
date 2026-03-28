@@ -239,6 +239,28 @@ async def get_today_usage_state(email: str):
 async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
+@app.get("/sitemap.xml")
+async def sitemap():
+    xml_content = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://mhjin91-docker.onrender.com/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>"""
+    return Response(content=xml_content, media_type="application/xml")
+
+
+@app.get("/robots.txt")
+async def robots():
+    content = """User-agent: *
+Allow: /
+
+Sitemap: https://mhjin91-docker.onrender.com/sitemap.xml
+"""
+    return Response(content=content, media_type="text/plain")
+
 
 @app.get("/success", response_class=HTMLResponse)
 async def success(request: Request):
