@@ -215,9 +215,21 @@
             border: none;
             background: transparent;
             cursor: pointer;
-            font-size: 18px;
-            line-height: 1;
             padding: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+        }
+
+        .toggle-password-btn:hover {
+            color: #111827;
+        }
+
+        .toggle-password-btn svg {
+            display: block;
+            width: 20px;
+            height: 20px;
         }
 
         .password-rules {
@@ -584,7 +596,21 @@
                             id="toggle-password-btn"
                             aria-label="Show password"
                         >
-                            👁
+                            <svg
+                                id="toggle-password-icon"
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
                         </button>
                     </div>
 
@@ -854,6 +880,7 @@
         const authEmailInput = document.getElementById("auth-email-input");
         const authPasswordInput = document.getElementById("auth-password-input");
         const togglePasswordBtn = document.getElementById("toggle-password-btn");
+        const togglePasswordIcon = document.getElementById("toggle-password-icon");
         const authModalError = document.getElementById("auth-modal-error");
         const authModalSubmitBtn = document.getElementById("auth-modal-submit-btn");
         const passwordRules = document.getElementById("password-rules");
@@ -899,6 +926,24 @@
             if (authModalSubmitBtn) authModalSubmitBtn.disabled = isBusy;
         }
 
+        function setEyeIcon(isVisible) {
+            if (!togglePasswordIcon) return;
+
+            if (isVisible) {
+                togglePasswordIcon.innerHTML = `
+                    <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-6.5 0-10-7-10-7a21.77 21.77 0 0 1 5.06-5.94"></path>
+                    <path d="M9.9 4.24A10.94 10.94 0 0 1 12 5c6.5 0 10 7 10 7a21.8 21.8 0 0 1-4.3 5.19"></path>
+                    <path d="M1 1l22 22"></path>
+                    <path d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58"></path>
+                `;
+            } else {
+                togglePasswordIcon.innerHTML = `
+                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                `;
+            }
+        }
+
         function resetAuthModalFields() {
             if (authEmailInput) authEmailInput.value = "";
             if (authPasswordInput) {
@@ -906,9 +951,9 @@
                 authPasswordInput.type = "password";
             }
             if (togglePasswordBtn) {
-                togglePasswordBtn.textContent = "👁";
                 togglePasswordBtn.setAttribute("aria-label", "Show password");
             }
+            setEyeIcon(false);
             if (authModalError) authModalError.textContent = "";
             if (passwordRules) {
                 passwordRules.classList.remove("ok", "bad");
@@ -1121,7 +1166,7 @@
             togglePasswordBtn.addEventListener("click", () => {
                 const isHidden = authPasswordInput.type === "password";
                 authPasswordInput.type = isHidden ? "text" : "password";
-                togglePasswordBtn.textContent = isHidden ? "🙈" : "👁";
+                setEyeIcon(isHidden);
                 togglePasswordBtn.setAttribute(
                     "aria-label",
                     isHidden ? "Hide password" : "Show password"
@@ -1333,6 +1378,7 @@
             authReady = false;
             currentSession = null;
             renderAuthUI();
+            setEyeIcon(false);
         });
     })();
     </script>
