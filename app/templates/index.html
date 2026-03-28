@@ -38,273 +38,19 @@
 
     <link rel="stylesheet" href="/static/style.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <style>
-        .selected-files {
-            margin-top: 12px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .selected-file-chip-row {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            backdrop-filter: blur(6px);
-        }
-
-        .selected-file-chip {
-            font-size: 14px;
-            line-height: 1;
-        }
-
-        .selected-file-remove-btn {
-            border: none;
-            background: transparent;
-            color: inherit;
-            font-size: 14px;
-            cursor: pointer;
-            padding: 0;
-            line-height: 1;
-            opacity: 0.75;
-        }
-
-        .selected-file-remove-btn:hover {
-            opacity: 1;
-        }
-
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(8, 12, 24, 0.58);
-            backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            z-index: 9999;
-        }
-
-        .modal-overlay.hidden {
-            display: none;
-        }
-
-        .modal-card {
-            position: relative;
-            width: 100%;
-            max-width: 440px;
-            border-radius: 22px;
-            padding: 28px 24px 22px;
-            background: #ffffff;
-            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.22);
-            color: #111827;
-        }
-
-        .modal-card h2 {
-            margin: 0 0 10px;
-            font-size: 28px;
-            line-height: 1.2;
-        }
-
-        .modal-card p {
-            margin: 0;
-            color: #4b5563;
-            line-height: 1.5;
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 12px;
-            right: 14px;
-            border: none;
-            background: transparent;
-            font-size: 20px;
-            cursor: pointer;
-            color: #6b7280;
-        }
-
-        .modal-close:hover {
-            color: #111827;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 22px;
-            flex-wrap: wrap;
-        }
-
-        .primary-btn,
-        .secondary-btn-modal {
-            border: none;
-            border-radius: 14px;
-            padding: 12px 16px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .primary-btn {
-            background: linear-gradient(135deg, #5b6cff, #7c4dff);
-            color: white;
-        }
-
-        .primary-btn:hover {
-            filter: brightness(1.03);
-        }
-
-        .secondary-btn-modal {
-            background: #eef2ff;
-            color: #334155;
-        }
-
-        .secondary-btn-modal:hover {
-            background: #e3e9ff;
-        }
-
-        .auth-modal-subtitle {
-            margin-bottom: 18px !important;
-        }
-
-        .auth-field {
-            margin-bottom: 14px;
-        }
-
-        .auth-field label {
-            display: block;
-            margin-bottom: 7px;
-            font-size: 14px;
-            font-weight: 600;
-            color: #111827;
-        }
-
-        .auth-field input {
-            width: 100%;
-            box-sizing: border-box;
-            border: 1px solid #d1d5db;
-            border-radius: 14px;
-            padding: 12px 14px;
-            font-size: 15px;
-            outline: none;
-            background: #fff;
-        }
-
-        .auth-field input:focus {
-            border-color: #6366f1;
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
-        }
-
-        .password-input-wrap {
-            position: relative;
-        }
-
-        .password-input-wrap input {
-            padding-right: 52px;
-        }
-
-        .toggle-password-btn {
-            position: absolute;
-            top: 50%;
-            right: 10px;
-            transform: translateY(-50%);
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            padding: 6px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            color: #6b7280;
-        }
-
-        .toggle-password-btn:hover {
-            color: #111827;
-        }
-
-        .toggle-password-btn svg {
-            display: block;
-            width: 20px;
-            height: 20px;
-        }
-
-        .password-rules {
-            margin-top: 8px !important;
-            font-size: 13px;
-            color: #6b7280;
-        }
-
-        .password-rules.ok {
-            color: #0f9d58;
-        }
-
-        .password-rules.bad {
-            color: #d93025;
-        }
-
-        .auth-modal-error {
-            min-height: 20px;
-            margin-top: 4px !important;
-            font-size: 13px;
-            color: #d93025 !important;
-        }
-
-        .auth-highlight-message {
-            margin-top: 10px !important;
-            padding: 11px 12px;
-            border-radius: 14px;
-            background: #fff7ed;
-            color: #9a3412 !important;
-            border: 1px solid #fdba74;
-            font-size: 14px;
-        }
-
-        @media (max-width: 640px) {
-            .modal-card {
-                padding: 24px 18px 18px;
-                border-radius: 18px;
-            }
-
-            .modal-card h2 {
-                font-size: 24px;
-            }
-
-            .modal-actions {
-                flex-direction: column;
-            }
-
-            .primary-btn,
-            .secondary-btn-modal {
-                width: 100%;
-            }
-        }
-    </style>
 </head>
 <body>
     <div class="page">
         <header class="hero">
-            <div
-                id="auth-status"
-                style="position:absolute; top:20px; right:150px; color:white; font-size:14px; z-index:1000; max-width:240px; text-align:right; display:none;"
-            ></div>
+            <div id="auth-status" class="auth-status"></div>
 
-            <div
-                id="auth-buttons"
-                style="position:absolute; top:20px; right:20px; display:none; gap:8px; z-index:1000;"
-            >
-                <button id="signup-btn" type="button">Sign Up</button>
-                <button id="login-btn" type="button">Login</button>
-                <button id="logout-btn" type="button" style="display:none;">Logout</button>
+            <div id="auth-buttons" class="auth-buttons">
+                <button id="signup-btn" type="button" class="btn btn-primary btn-sm">Sign Up</button>
+                <button id="login-btn" type="button" class="btn btn-primary btn-sm">Login</button>
+                <button id="logout-btn" type="button" class="btn btn-primary btn-sm" style="display:none;">Logout</button>
             </div>
 
-            <div
-                id="auth-message"
-                style="position:absolute; top:56px; right:20px; color:white; font-size:13px; z-index:1000; max-width:280px; text-align:right;"
-            ></div>
+            <div id="auth-message" class="auth-message"></div>
 
             <div class="hero-topbar">
                 <div class="hero-text">
@@ -321,7 +67,7 @@
 
         <main class="container">
             {% if success_message %}
-                <section class="card success-box" style="margin-bottom:16px; border:1px solid #35c759;">
+                <section class="card success-box">
                     <h2>Success</h2>
                     <p>{{ success_message }}</p>
                 </section>
@@ -358,32 +104,32 @@
                         <div id="selected-files" class="selected-files"></div>
                     </div>
 
-                    <label style="display:block; margin-top:10px;">
+                    <label class="checkbox-row">
                         <input type="checkbox" name="remove_whitespace">
                         <span>Remove whitespace</span>
                     </label>
 
                     <div class="form-actions">
-                        <button type="submit">Generate SVG Files</button>
+                        <button type="submit" class="btn btn-primary">Generate SVG Files</button>
                     </div>
                 </form>
 
                 <div class="pricing-box">
-                    <p style="margin-top:10px; font-size:14px; opacity:0.8;">
+                    <p class="pricing-note">
                         Free: 5 conversions per day
                     </p>
 
-                    <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                    <div class="pricing-actions">
                         <form id="monthly-checkout-form" action="/create-checkout-session/monthly" method="post">
                             <input type="hidden" name="access_token" id="monthly_access_token">
-                            <button id="monthly-checkout-btn" type="submit" class="secondary-btn">
+                            <button id="monthly-checkout-btn" type="submit" class="btn btn-secondary">
                                 Pro Monthly €5.99
                             </button>
                         </form>
 
                         <form id="lifetime-checkout-form" action="/create-checkout-session/lifetime" method="post">
                             <input type="hidden" name="access_token" id="lifetime_access_token">
-                            <button id="lifetime-checkout-btn" type="submit" class="secondary-btn">
+                            <button id="lifetime-checkout-btn" type="submit" class="btn btn-secondary">
                                 Lifetime €39.99
                             </button>
                         </form>
@@ -430,7 +176,7 @@
                                     name="results_json"
                                     value='{{ results | tojson | safe }}'
                                 >
-                                <button type="submit" class="secondary-btn">
+                                <button type="submit" class="btn btn-secondary">
                                     🗂 Export All as ZIP
                                 </button>
                             </form>
@@ -453,17 +199,19 @@
                                     </div>
 
                                     <div class="file-row-actions">
-                                        <button type="button" class="preview-btn">Open Preview</button>
+                                        <button type="button" class="btn btn-ghost preview-btn">Open Preview</button>
 
                                         <button
                                             type="button"
-                                            class="download-btn"
+                                            class="btn btn-primary download-btn"
                                             onclick="downloadSVG(this.closest('.file-row').dataset.svg, this.closest('.file-row').dataset.svgFilename)"
                                         >
                                             ⬇ Export SVG
                                         </button>
 
-                                        <button type="button" class="remove-btn" onclick="removeFile(this)">❌</button>
+                                        <button type="button" class="icon-btn remove-btn" onclick="removeFile(this)" aria-label="Remove file">
+                                            ✕
+                                        </button>
                                     </div>
                                 </div>
                             {% endfor %}
@@ -483,11 +231,11 @@
                         </div>
 
                         <div class="color-picker-row">
-                            <button type="button" class="color-btn active" data-color="#000000">Black</button>
-                            <button type="button" class="color-btn" data-color="#ff4d6d">Rose</button>
-                            <button type="button" class="color-btn" data-color="#4f46e5">Indigo</button>
-                            <button type="button" class="color-btn" data-color="#0f9d58">Green</button>
-                            <button type="button" class="color-btn" data-color="#f4b400">Gold</button>
+                            <button type="button" class="chip-btn color-btn active" data-color="#000000">Black</button>
+                            <button type="button" class="chip-btn color-btn" data-color="#ff4d6d">Rose</button>
+                            <button type="button" class="chip-btn color-btn" data-color="#4f46e5">Indigo</button>
+                            <button type="button" class="chip-btn color-btn" data-color="#0f9d58">Green</button>
+                            <button type="button" class="chip-btn color-btn" data-color="#f4b400">Gold</button>
                         </div>
 
                         <div class="preview-stage">
@@ -538,29 +286,27 @@
         </main>
     </div>
 
-    <!-- Auth Required Modal -->
     <div id="auth-required-modal" class="modal-overlay hidden">
         <div class="modal-card">
-            <button type="button" class="modal-close" onclick="closeAuthRequiredModal()">✕</button>
+            <button type="button" class="icon-btn modal-close" onclick="closeAuthRequiredModal()" aria-label="Close">✕</button>
             <h2>Login required</h2>
             <p>Please sign up or log in to convert files.</p>
             <p class="auth-highlight-message">Create an account or log in to start converting your images.</p>
 
             <div class="modal-actions">
-                <button type="button" class="primary-btn" onclick="openAuthModal('login'); closeAuthRequiredModal();">
+                <button type="button" class="btn btn-primary" onclick="openAuthModal('login'); closeAuthRequiredModal();">
                     Log In
                 </button>
-                <button type="button" class="secondary-btn-modal" onclick="openAuthModal('signup'); closeAuthRequiredModal();">
+                <button type="button" class="btn btn-secondary" onclick="openAuthModal('signup'); closeAuthRequiredModal();">
                     Sign Up
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Auth Form Modal -->
     <div id="auth-modal" class="modal-overlay hidden">
         <div class="modal-card auth-modal-card">
-            <button type="button" class="modal-close" onclick="closeAuthModal()">✕</button>
+            <button type="button" class="icon-btn modal-close" onclick="closeAuthModal()" aria-label="Close">✕</button>
 
             <h2 id="auth-modal-title">Log In</h2>
             <p id="auth-modal-subtitle" class="auth-modal-subtitle">
@@ -592,15 +338,13 @@
                         />
                         <button
                             type="button"
-                            class="toggle-password-btn"
+                            class="icon-btn toggle-password-btn"
                             id="toggle-password-btn"
                             aria-label="Show password"
                         >
                             <svg
                                 id="toggle-password-icon"
                                 xmlns="http://www.w3.org/2000/svg"
-                                width="20"
-                                height="20"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
@@ -622,7 +366,7 @@
                 <p id="auth-modal-error" class="auth-modal-error"></p>
 
                 <div class="modal-actions">
-                    <button type="submit" class="primary-btn" id="auth-modal-submit-btn">
+                    <button type="submit" class="btn btn-primary" id="auth-modal-submit-btn">
                         Continue
                     </button>
                 </div>
@@ -654,9 +398,7 @@
         if (!fileInput) return;
 
         const dataTransfer = new DataTransfer();
-        selectedUploadFiles.forEach((file) => {
-            dataTransfer.items.add(file);
-        });
+        selectedUploadFiles.forEach((file) => dataTransfer.items.add(file));
         fileInput.files = dataTransfer.files;
     }
 
@@ -674,7 +416,7 @@
                     <span class="selected-file-chip">${file.name}</span>
                     <button
                         type="button"
-                        class="selected-file-remove-btn"
+                        class="icon-btn selected-file-remove-btn"
                         onclick="removeSelectedUploadFile(${index})"
                         aria-label="Remove ${file.name}"
                         title="Remove file"
@@ -954,7 +696,12 @@
                 togglePasswordBtn.setAttribute("aria-label", "Show password");
             }
             setEyeIcon(false);
-            if (authModalError) authModalError.textContent = "";
+
+            if (authModalError) {
+                authModalError.textContent = "";
+                authModalError.classList.remove("success");
+            }
+
             if (passwordRules) {
                 passwordRules.classList.remove("ok", "bad");
             }
@@ -993,15 +740,11 @@
         }
 
         function openAuthRequiredModal() {
-            if (authRequiredModal) {
-                authRequiredModal.classList.remove("hidden");
-            }
+            if (authRequiredModal) authRequiredModal.classList.remove("hidden");
         }
 
         function closeAuthRequiredModal() {
-            if (authRequiredModal) {
-                authRequiredModal.classList.add("hidden");
-            }
+            if (authRequiredModal) authRequiredModal.classList.add("hidden");
         }
 
         function openAuthModal(mode) {
@@ -1032,9 +775,7 @@
             resetAuthModalFields();
             updatePasswordRulesUI();
 
-            if (authModal) {
-                authModal.classList.remove("hidden");
-            }
+            if (authModal) authModal.classList.remove("hidden");
 
             setTimeout(() => {
                 if (authEmailInput) authEmailInput.focus();
@@ -1042,9 +783,7 @@
         }
 
         function closeAuthModal() {
-            if (authModal) {
-                authModal.classList.add("hidden");
-            }
+            if (authModal) authModal.classList.add("hidden");
         }
 
         window.openAuthModal = openAuthModal;
@@ -1058,8 +797,8 @@
 
             if (!authReady) {
                 if (authStatus) authStatus.textContent = "";
-                if (signupBtn) signupBtn.style.display = "inline-block";
-                if (loginBtn) loginBtn.style.display = "inline-block";
+                if (signupBtn) signupBtn.style.display = "inline-flex";
+                if (loginBtn) loginBtn.style.display = "inline-flex";
                 if (logoutBtn) logoutBtn.style.display = "none";
                 if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = true;
                 if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = true;
@@ -1070,8 +809,8 @@
 
             if (!currentSession || !currentSession.user) {
                 if (authStatus) authStatus.textContent = "";
-                if (signupBtn) signupBtn.style.display = "inline-block";
-                if (loginBtn) loginBtn.style.display = "inline-block";
+                if (signupBtn) signupBtn.style.display = "inline-flex";
+                if (loginBtn) loginBtn.style.display = "inline-flex";
                 if (logoutBtn) logoutBtn.style.display = "none";
                 if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = true;
                 if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = true;
@@ -1086,7 +825,7 @@
             if (authStatus) authStatus.textContent = `Logged in: ${email}`;
             if (signupBtn) signupBtn.style.display = "none";
             if (loginBtn) loginBtn.style.display = "none";
-            if (logoutBtn) logoutBtn.style.display = "inline-block";
+            if (logoutBtn) logoutBtn.style.display = "inline-flex";
             if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = false;
             if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = false;
             setTokenInputs(token);
@@ -1122,7 +861,7 @@
             }
 
             if (authModalError) {
-                authModalError.style.color = "#0f9d58";
+                authModalError.classList.add("success");
                 authModalError.textContent = "Sign up success. You can now continue.";
             }
 
@@ -1132,9 +871,7 @@
 
             setTimeout(() => {
                 closeAuthModal();
-                if (authModalError) {
-                    authModalError.style.color = "#d93025";
-                }
+                if (authModalError) authModalError.classList.remove("success");
             }, 700);
         }
 
@@ -1150,15 +887,13 @@
             renderAuthUI();
 
             if (authModalError) {
-                authModalError.style.color = "#0f9d58";
+                authModalError.classList.add("success");
                 authModalError.textContent = "Login success.";
             }
 
             setTimeout(() => {
                 closeAuthModal();
-                if (authModalError) {
-                    authModalError.style.color = "#d93025";
-                }
+                if (authModalError) authModalError.classList.remove("success");
             }, 500);
         }
 
@@ -1185,7 +920,10 @@
                 const email = (authEmailInput?.value || "").trim();
                 const password = authPasswordInput?.value || "";
 
-                if (authModalError) authModalError.textContent = "";
+                if (authModalError) {
+                    authModalError.textContent = "";
+                    authModalError.classList.remove("success");
+                }
 
                 if (!email) {
                     if (authModalError) authModalError.textContent = "Please enter your email.";
@@ -1216,7 +954,6 @@
                     }
                 } catch (err) {
                     if (authModalError) {
-                        authModalError.style.color = "#d93025";
                         authModalError.textContent = err.message || "Authentication failed.";
                     }
                 } finally {
