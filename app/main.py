@@ -8,7 +8,7 @@ from urllib.parse import quote
 import httpx
 import stripe
 from fastapi import FastAPI, Request, UploadFile, File, Form, Header
-from fastapi.responses import HTMLResponse, Response, RedirectResponse
+from fastapi.responses import HTMLResponse, Response, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -30,6 +30,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 
 PAID_USERS_FILE = "paid_users.json"
+FREE_DAILY_LIMIT = 5
 
 
 # =========================
@@ -60,9 +61,12 @@ def is_paid_user(email: str | None):
         return False
 
     if user.get("plan") == "monthly":
-        paid_at = datetime.fromisoformat(user["paid_at"])
-        days = (datetime.utcnow() - paid_at).days
-        if days > 30:
+        try:
+            paid_at = datetime.fromisoformat(user["paid_at"])
+            days = (datetime.utcnow() - paid_at).days
+            if days > 30:
+                return False
+        except Exception:
             return False
 
     return True
@@ -143,6 +147,24 @@ async def upsert_usage(email: str, count: int, today: str):
         raise RuntimeError(f"Supabase upsert_usage failed: {res.status_code} - {res.text}")
 
 
+async def get_today_usage_state(email: str):
+    today = datetime.utcnow().date().isoformat()
+    usage = await get_usage(email)
+
+    if not usage:
+        current = 0
+    else:
+        current = 0 if usage.get("last_date") != today else int(usage.get("count", 0))
+
+    remaining = max(FREE_DAILY_LIMIT - current, 0)
+
+    return {
+        "today": today,
+        "current": current,
+        "remaining": remaining,
+    }
+
+
 # =========================
 # Home
 # =========================
@@ -163,6 +185,79 @@ async def success(request: Request):
 
 
 # =========================
+# Check convert access
+# =========================
+@app.post("/check-convert-access")
+async def check_convert_access(
+    access_token: str = Form(""),
+    file_count: int = Form(1),
+):
+    try:
+        email = await get_supabase_user_email(access_token)
+        if not email:
+            return JSONResponse(
+                {
+                    "allowed": False,
+                    "reason": "login_required",
+                    "message": "Login required."
+                },
+                status_code=401,
+            )
+
+        if is_paid_user(email):
+            return JSONResponse(
+                {
+                    "allowed": True,
+                    "reason": "pro",
+                    "remaining": None,
+                    "message": "Pro user"
+                }
+            )
+
+        usage_state = await get_today_usage_state(email)
+        remaining = usage_state["remaining"]
+
+        if remaining <= 0:
+            return JSONResponse(
+                {
+                    "allowed": False,
+                    "reason": "limit_reached",
+                    "remaining": 0,
+                    "message": "Free limit reached (5/day)"
+                }
+            )
+
+        if file_count > remaining:
+            return JSONResponse(
+                {
+                    "allowed": False,
+                    "reason": "not_enough_remaining",
+                    "remaining": remaining,
+                    "message": f"You only have {remaining} free conversion(s) left today."
+                }
+            )
+
+        return JSONResponse(
+            {
+                "allowed": True,
+                "reason": "free_ok",
+                "remaining": remaining,
+                "message": "Allowed"
+            }
+        )
+
+    except Exception as e:
+        return JSONResponse(
+            {
+                "allowed": False,
+                "reason": "server_error",
+                "message": f"Server error: {str(e)}"
+            },
+            status_code=500,
+        )
+
+
+# =========================
 # Convert
 # =========================
 @app.post("/convert", response_class=HTMLResponse)
@@ -173,8 +268,6 @@ async def convert_images(
     access_token: str = Form(""),
 ):
     try:
-        today = datetime.utcnow().date().isoformat()
-
         email = await get_supabase_user_email(access_token)
         if not email:
             return templates.TemplateResponse(
@@ -192,19 +285,27 @@ async def convert_images(
             )
 
         if not is_pro:
-            usage = await get_usage(email)
+            usage_state = await get_today_usage_state(email)
+            today = usage_state["today"]
+            current = usage_state["current"]
+            remaining = usage_state["remaining"]
 
-            if not usage:
-                current = 0
-            else:
-                current = 0 if usage.get("last_date") != today else int(usage.get("count", 0))
-
-            if current + len(valid_files) > 5:
+            if remaining <= 0:
                 return templates.TemplateResponse(
                     "index.html",
                     {"request": request, "error": "Free limit reached (5/day)"},
                 )
+
+            if len(valid_files) > remaining:
+                return templates.TemplateResponse(
+                    "index.html",
+                    {
+                        "request": request,
+                        "error": f"You only have {remaining} free conversion(s) left today."
+                    },
+                )
         else:
+            today = datetime.utcnow().date().isoformat()
             current = 0
 
         results = []
@@ -283,13 +384,18 @@ async def download_all(results_json: str = Form(...)):
 async def create_checkout_session(
     plan: str,
     access_token: str = Form(""),
+    x_requested_with: str | None = Header(default=None),
 ):
     email = await get_supabase_user_email(access_token)
 
     if not email:
+        if x_requested_with == "XMLHttpRequest":
+            return JSONResponse({"error": "Login required"}, status_code=401)
         return Response("Login required", status_code=401)
 
     if plan not in {"monthly", "lifetime"}:
+        if x_requested_with == "XMLHttpRequest":
+            return JSONResponse({"error": "Invalid plan"}, status_code=400)
         return Response("Invalid plan", status_code=400)
 
     price_id = MONTHLY_PRICE_ID if plan == "monthly" else LIFETIME_PRICE_ID
@@ -304,6 +410,9 @@ async def create_checkout_session(
         success_url=f"{DOMAIN}/success",
         cancel_url=f"{DOMAIN}/",
     )
+
+    if x_requested_with == "XMLHttpRequest":
+        return JSONResponse({"checkout_url": session.url})
 
     return RedirectResponse(session.url, status_code=303)
 

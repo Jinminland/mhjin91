@@ -14,7 +14,6 @@
     --line-soft: #e4e9ff;
     --line-mid: #cfd8ff;
     --chip-bg-1: #eef1ff;
-    --chip-bg-2: #e8f4ff;
     --danger-bg: #ffe5e9;
     --danger-text: #d11a2a;
     --danger-bg-hover: #ffccd3;
@@ -561,28 +560,6 @@ body {
     margin-top: 0;
 }
 
-.language-switcher {
-    min-width: 160px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.language-switcher label {
-    font-size: 0.9rem;
-    font-weight: 600;
-    opacity: 0.85;
-}
-
-.language-switcher select {
-    padding: 10px 12px;
-    border-radius: 12px;
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    background: #fff;
-    font: inherit;
-    cursor: pointer;
-}
-
 /* Modal */
 .modal-overlay {
     position: fixed;
@@ -751,7 +728,6 @@ body {
     font-size: 14px;
 }
 
-/* small icon buttons used inside chips */
 .selected-file-remove-btn {
     width: 20px;
     height: 20px;
@@ -782,10 +758,6 @@ body {
     .hero-topbar {
         flex-direction: column;
         align-items: stretch;
-    }
-
-    .language-switcher {
-        max-width: 220px;
     }
 }
 

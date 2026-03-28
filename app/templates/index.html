@@ -304,6 +304,24 @@
         </div>
     </div>
 
+    <div id="upgrade-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <button type="button" class="icon-btn modal-close" onclick="closeUpgradeModal()" aria-label="Close">✕</button>
+            <h2>Free limit reached</h2>
+            <p>You used all 5 free conversions for today.</p>
+            <p id="upgrade-modal-detail" class="auth-highlight-message">Upgrade now to keep converting immediately.</p>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-primary" id="upgrade-monthly-btn">
+                    Pro Monthly €5.99
+                </button>
+                <button type="button" class="btn btn-secondary" id="upgrade-lifetime-btn">
+                    Lifetime €39.99
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="auth-modal" class="modal-overlay hidden">
         <div class="modal-card auth-modal-card">
             <button type="button" class="icon-btn modal-close" onclick="closeAuthModal()" aria-label="Close">✕</button>
@@ -614,8 +632,14 @@
         const monthlyCheckoutForm = document.getElementById("monthly-checkout-form");
         const lifetimeCheckoutForm = document.getElementById("lifetime-checkout-form");
 
+        const upgradeMonthlyBtn = document.getElementById("upgrade-monthly-btn");
+        const upgradeLifetimeBtn = document.getElementById("upgrade-lifetime-btn");
+        const upgradeModalDetail = document.getElementById("upgrade-modal-detail");
+
         const authRequiredModal = document.getElementById("auth-required-modal");
         const authModal = document.getElementById("auth-modal");
+        const upgradeModal = document.getElementById("upgrade-modal");
+
         const authModalTitle = document.getElementById("auth-modal-title");
         const authModalSubtitle = document.getElementById("auth-modal-subtitle");
         const authModalForm = document.getElementById("auth-modal-form");
@@ -747,6 +771,17 @@
             if (authRequiredModal) authRequiredModal.classList.add("hidden");
         }
 
+        function openUpgradeModal(message) {
+            if (upgradeModalDetail && message) {
+                upgradeModalDetail.textContent = message;
+            }
+            if (upgradeModal) upgradeModal.classList.remove("hidden");
+        }
+
+        function closeUpgradeModal() {
+            if (upgradeModal) upgradeModal.classList.add("hidden");
+        }
+
         function openAuthModal(mode) {
             authModalMode = mode;
 
@@ -790,6 +825,7 @@
         window.closeAuthModal = closeAuthModal;
         window.openAuthRequiredModal = openAuthRequiredModal;
         window.closeAuthRequiredModal = closeAuthRequiredModal;
+        window.closeUpgradeModal = closeUpgradeModal;
 
         function renderAuthUI() {
             if (authButtons) authButtons.style.display = "flex";
@@ -854,7 +890,13 @@
         }
 
         async function handleSignup(email, password) {
-            const result = await authClient.auth.signUp({ email, password });
+            const result = await authClient.auth.signUp({
+                email,
+                password,
+                options: {
+                    emailRedirectTo: window.location.origin
+                }
+            });
 
             if (result.error) {
                 throw new Error(result.error.message);
@@ -862,17 +904,8 @@
 
             if (authModalError) {
                 authModalError.classList.add("success");
-                authModalError.textContent = "Sign up success. You can now continue.";
+                authModalError.textContent = "Check your email and confirm your account first.";
             }
-
-            currentSession = result.data?.session || currentSession;
-            authReady = true;
-            renderAuthUI();
-
-            setTimeout(() => {
-                closeAuthModal();
-                if (authModalError) authModalError.classList.remove("success");
-            }, 700);
         }
 
         async function handleLogin(email, password) {
@@ -895,6 +928,54 @@
                 closeAuthModal();
                 if (authModalError) authModalError.classList.remove("success");
             }, 500);
+        }
+
+        async function startCheckout(plan) {
+            try {
+                await waitForAuthReady();
+            } catch (err) {
+                showMessage(err.message);
+                return;
+            }
+
+            if (!currentSession?.user) {
+                openAuthRequiredModal();
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("access_token", currentSession.access_token || "");
+
+            const response = await fetch(`/create-checkout-session/${plan}`, {
+                method: "POST",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.checkout_url) {
+                showMessage(data.error || "Could not start checkout.");
+                return;
+            }
+
+            window.location.href = data.checkout_url;
+        }
+
+        async function checkConvertAccess(fileCount) {
+            const formData = new FormData();
+            formData.append("access_token", currentSession?.access_token || "");
+            formData.append("file_count", String(fileCount));
+
+            const response = await fetch("/check-convert-access", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json();
+            return { ok: response.ok, data };
         }
 
         if (togglePasswordBtn && authPasswordInput) {
@@ -995,6 +1076,28 @@
             });
         }
 
+        if (upgradeMonthlyBtn) {
+            upgradeMonthlyBtn.addEventListener("click", () => startCheckout("monthly"));
+        }
+
+        if (upgradeLifetimeBtn) {
+            upgradeLifetimeBtn.addEventListener("click", () => startCheckout("lifetime"));
+        }
+
+        if (monthlyCheckoutForm) {
+            monthlyCheckoutForm.addEventListener("submit", async function (e) {
+                e.preventDefault();
+                await startCheckout("monthly");
+            });
+        }
+
+        if (lifetimeCheckoutForm) {
+            lifetimeCheckoutForm.addEventListener("submit", async function (e) {
+                e.preventDefault();
+                await startCheckout("lifetime");
+            });
+        }
+
         if (convertForm) {
             convertForm.addEventListener("submit", async function (e) {
                 e.preventDefault();
@@ -1016,6 +1119,29 @@
                     return;
                 }
 
+                const accessCheck = await checkConvertAccess(window.selectedUploadFiles.length);
+
+                if (!accessCheck.ok || !accessCheck.data.allowed) {
+                    if (accessCheck.data.reason === "login_required") {
+                        openAuthRequiredModal();
+                        return;
+                    }
+
+                    if (accessCheck.data.reason === "limit_reached") {
+                        openUpgradeModal("You used all 5 free conversions for today. Upgrade now to keep converting immediately.");
+                        return;
+                    }
+
+                    if (accessCheck.data.reason === "not_enough_remaining") {
+                        const remaining = accessCheck.data.remaining ?? 0;
+                        openUpgradeModal(`You only have ${remaining} free conversion(s) left today. Upgrade now to convert more files.`);
+                        return;
+                    }
+
+                    showMessage(accessCheck.data.message || "Could not check free limit.");
+                    return;
+                }
+
                 const dataTransfer = new DataTransfer();
                 window.selectedUploadFiles.forEach((file) => {
                     dataTransfer.items.add(file);
@@ -1029,48 +1155,6 @@
                 setTokenInputs(currentSession.access_token || "");
                 showMessage("Converting...");
                 convertForm.submit();
-            });
-        }
-
-        if (monthlyCheckoutForm) {
-            monthlyCheckoutForm.addEventListener("submit", async function (e) {
-                e.preventDefault();
-
-                try {
-                    await waitForAuthReady();
-                } catch (err) {
-                    showMessage(err.message);
-                    return;
-                }
-
-                if (!currentSession?.user) {
-                    openAuthRequiredModal();
-                    return;
-                }
-
-                setTokenInputs(currentSession.access_token || "");
-                monthlyCheckoutForm.submit();
-            });
-        }
-
-        if (lifetimeCheckoutForm) {
-            lifetimeCheckoutForm.addEventListener("submit", async function (e) {
-                e.preventDefault();
-
-                try {
-                    await waitForAuthReady();
-                } catch (err) {
-                    showMessage(err.message);
-                    return;
-                }
-
-                if (!currentSession?.user) {
-                    openAuthRequiredModal();
-                    return;
-                }
-
-                setTokenInputs(currentSession.access_token || "");
-                lifetimeCheckoutForm.submit();
             });
         }
 
@@ -1092,6 +1176,7 @@
             if (e.key === "Escape") {
                 closeAuthModal();
                 closeAuthRequiredModal();
+                closeUpgradeModal();
             }
         });
 
@@ -1107,6 +1192,14 @@
             authRequiredModal.addEventListener("click", function (e) {
                 if (e.target === authRequiredModal) {
                     closeAuthRequiredModal();
+                }
+            });
+        }
+
+        if (upgradeModal) {
+            upgradeModal.addEventListener("click", function (e) {
+                if (e.target === upgradeModal) {
+                    closeUpgradeModal();
                 }
             });
         }
