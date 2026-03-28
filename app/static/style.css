@@ -111,6 +111,40 @@ body {
     text-align: right;
 }
 
+.plan-status-badge {
+    position: absolute;
+    top: 56px;
+    right: 150px;
+    z-index: 1000;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+    backdrop-filter: blur(8px);
+}
+
+.plan-status-badge.free {
+    background: rgba(255, 255, 255, 0.18);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.plan-status-badge.monthly {
+    background: rgba(255, 244, 204, 0.22);
+    color: #fff7cc;
+    border: 1px solid rgba(255, 244, 204, 0.35);
+}
+
+.plan-status-badge.lifetime {
+    background: rgba(255, 215, 0, 0.22);
+    color: #ffe27a;
+    border: 1px solid rgba(255, 215, 0, 0.35);
+}
+
 .container {
     max-width: 1120px;
     margin: -22px auto 0;
@@ -560,7 +594,6 @@ body {
     margin-top: 0;
 }
 
-/* Modal */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -803,5 +836,12 @@ body {
 
     .modal-actions .btn {
         width: 100%;
+    }
+
+    .plan-status-badge {
+        top: 96px;
+        right: 20px;
+        font-size: 12px;
+        padding: 7px 10px;
     }
 }

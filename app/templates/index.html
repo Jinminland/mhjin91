@@ -43,6 +43,7 @@
     <div class="page">
         <header class="hero">
             <div id="auth-status" class="auth-status"></div>
+            <div id="plan-status-badge" class="plan-status-badge" style="display:none;"></div>
 
             <div id="auth-buttons" class="auth-buttons">
                 <button id="signup-btn" type="button" class="btn btn-primary btn-sm">Sign Up</button>
@@ -616,6 +617,7 @@
     <script>
     (function () {
         const authStatus = document.getElementById("auth-status");
+        const planStatusBadge = document.getElementById("plan-status-badge");
         const authButtons = document.getElementById("auth-buttons");
         const authMessage = document.getElementById("auth-message");
 
@@ -821,6 +823,56 @@
             if (authModal) authModal.classList.add("hidden");
         }
 
+        async function fetchMyPlanStatus() {
+            if (!currentSession?.access_token) {
+                if (planStatusBadge) {
+                    planStatusBadge.style.display = "none";
+                    planStatusBadge.textContent = "";
+                    planStatusBadge.className = "plan-status-badge";
+                }
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append("access_token", currentSession.access_token || "");
+
+                const response = await fetch("/my-plan-status", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!planStatusBadge) return;
+
+                if (!response.ok) {
+                    planStatusBadge.style.display = "none";
+                    planStatusBadge.textContent = "";
+                    planStatusBadge.className = "plan-status-badge";
+                    return;
+                }
+
+                planStatusBadge.style.display = "inline-flex";
+                planStatusBadge.textContent = data.label || "Free";
+                planStatusBadge.className = "plan-status-badge";
+
+                if (data.plan === "lifetime") {
+                    planStatusBadge.classList.add("lifetime");
+                } else if (data.plan === "monthly") {
+                    planStatusBadge.classList.add("monthly");
+                } else {
+                    planStatusBadge.classList.add("free");
+                }
+            } catch (error) {
+                if (planStatusBadge) {
+                    planStatusBadge.style.display = "none";
+                    planStatusBadge.textContent = "";
+                    planStatusBadge.className = "plan-status-badge";
+                }
+            }
+        }
+
         window.openAuthModal = openAuthModal;
         window.closeAuthModal = closeAuthModal;
         window.openAuthRequiredModal = openAuthRequiredModal;
@@ -838,6 +890,11 @@
                 if (logoutBtn) logoutBtn.style.display = "none";
                 if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = true;
                 if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = true;
+                if (planStatusBadge) {
+                    planStatusBadge.style.display = "none";
+                    planStatusBadge.textContent = "";
+                    planStatusBadge.className = "plan-status-badge";
+                }
                 setTokenInputs("");
                 showMessage("Checking session...");
                 return;
@@ -850,6 +907,11 @@
                 if (logoutBtn) logoutBtn.style.display = "none";
                 if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = true;
                 if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = true;
+                if (planStatusBadge) {
+                    planStatusBadge.style.display = "none";
+                    planStatusBadge.textContent = "";
+                    planStatusBadge.className = "plan-status-badge";
+                }
                 setTokenInputs("");
                 showMessage("");
                 return;
@@ -866,6 +928,7 @@
             if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = false;
             setTokenInputs(token);
             showMessage("");
+            fetchMyPlanStatus();
         }
 
         function waitForAuthReady(timeoutMs = 15000) {

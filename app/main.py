@@ -81,6 +81,72 @@ def add_paid_user(email: str, plan: str):
     save_paid_users(paid_users)
 
 
+def get_user_plan_status(email: str | None):
+    if not email:
+        return {
+            "pro": False,
+            "plan": "free",
+            "label": "Free",
+            "days_left": None,
+        }
+
+    paid_users = load_paid_users()
+    user = paid_users.get(email.lower().strip())
+
+    if not user:
+        return {
+            "pro": False,
+            "plan": "free",
+            "label": "Free",
+            "days_left": None,
+        }
+
+    plan = user.get("plan")
+
+    if plan == "lifetime":
+        return {
+            "pro": True,
+            "plan": "lifetime",
+            "label": "Lifetime Pro",
+            "days_left": None,
+        }
+
+    if plan == "monthly":
+        try:
+            paid_at = datetime.fromisoformat(user["paid_at"])
+            days_used = (datetime.utcnow() - paid_at).days
+            days_left = max(30 - days_used, 0)
+
+            if days_left <= 0:
+                return {
+                    "pro": False,
+                    "plan": "free",
+                    "label": "Free",
+                    "days_left": 0,
+                }
+
+            return {
+                "pro": True,
+                "plan": "monthly",
+                "label": f"Pro Monthly · {days_left} day(s) left",
+                "days_left": days_left,
+            }
+        except Exception:
+            return {
+                "pro": False,
+                "plan": "free",
+                "label": "Free",
+                "days_left": None,
+            }
+
+    return {
+        "pro": False,
+        "plan": "free",
+        "label": "Free",
+        "days_left": None,
+    }
+
+
 # =========================
 # Supabase 로그인 확인
 # =========================
@@ -444,4 +510,25 @@ async def stripe_webhook(request: Request, stripe_signature: str = Header(None))
 # =========================
 @app.get("/check-pro")
 async def check_pro(email: str):
-    return {"pro": is_paid_user(email)}
+    return get_user_plan_status(email)
+
+
+@app.post("/my-plan-status")
+async def my_plan_status(access_token: str = Form("")):
+    email = await get_supabase_user_email(access_token)
+
+    if not email:
+        return JSONResponse(
+            {
+                "pro": False,
+                "plan": "free",
+                "label": "Free",
+                "days_left": None,
+                "email": None,
+            },
+            status_code=401,
+        )
+
+    status = get_user_plan_status(email)
+    status["email"] = email
+    return JSONResponse(status)
