@@ -77,6 +77,199 @@
         .selected-file-remove-btn:hover {
             opacity: 1;
         }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(8, 12, 24, 0.58);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 9999;
+        }
+
+        .modal-overlay.hidden {
+            display: none;
+        }
+
+        .modal-card {
+            position: relative;
+            width: 100%;
+            max-width: 440px;
+            border-radius: 22px;
+            padding: 28px 24px 22px;
+            background: #ffffff;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.22);
+            color: #111827;
+        }
+
+        .modal-card h2 {
+            margin: 0 0 10px;
+            font-size: 28px;
+            line-height: 1.2;
+        }
+
+        .modal-card p {
+            margin: 0;
+            color: #4b5563;
+            line-height: 1.5;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 12px;
+            right: 14px;
+            border: none;
+            background: transparent;
+            font-size: 20px;
+            cursor: pointer;
+            color: #6b7280;
+        }
+
+        .modal-close:hover {
+            color: #111827;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 22px;
+            flex-wrap: wrap;
+        }
+
+        .primary-btn,
+        .secondary-btn-modal {
+            border: none;
+            border-radius: 14px;
+            padding: 12px 16px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .primary-btn {
+            background: linear-gradient(135deg, #5b6cff, #7c4dff);
+            color: white;
+        }
+
+        .primary-btn:hover {
+            filter: brightness(1.03);
+        }
+
+        .secondary-btn-modal {
+            background: #eef2ff;
+            color: #334155;
+        }
+
+        .secondary-btn-modal:hover {
+            background: #e3e9ff;
+        }
+
+        .auth-modal-subtitle {
+            margin-bottom: 18px !important;
+        }
+
+        .auth-field {
+            margin-bottom: 14px;
+        }
+
+        .auth-field label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .auth-field input {
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #d1d5db;
+            border-radius: 14px;
+            padding: 12px 14px;
+            font-size: 15px;
+            outline: none;
+            background: #fff;
+        }
+
+        .auth-field input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+        }
+
+        .password-input-wrap {
+            position: relative;
+        }
+
+        .password-input-wrap input {
+            padding-right: 52px;
+        }
+
+        .toggle-password-btn {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+            padding: 6px;
+        }
+
+        .password-rules {
+            margin-top: 8px !important;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .password-rules.ok {
+            color: #0f9d58;
+        }
+
+        .password-rules.bad {
+            color: #d93025;
+        }
+
+        .auth-modal-error {
+            min-height: 20px;
+            margin-top: 4px !important;
+            font-size: 13px;
+            color: #d93025 !important;
+        }
+
+        .auth-highlight-message {
+            margin-top: 10px !important;
+            padding: 11px 12px;
+            border-radius: 14px;
+            background: #fff7ed;
+            color: #9a3412 !important;
+            border: 1px solid #fdba74;
+            font-size: 14px;
+        }
+
+        @media (max-width: 640px) {
+            .modal-card {
+                padding: 24px 18px 18px;
+                border-radius: 18px;
+            }
+
+            .modal-card h2 {
+                font-size: 24px;
+            }
+
+            .modal-actions {
+                flex-direction: column;
+            }
+
+            .primary-btn,
+            .secondary-btn-modal {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -91,9 +284,9 @@
                 id="auth-buttons"
                 style="position:absolute; top:20px; right:20px; display:none; gap:8px; z-index:1000;"
             >
-                <button id="signup-btn" type="button" onclick="authSignUp()">Sign Up</button>
-                <button id="login-btn" type="button" onclick="authLogin()">Login</button>
-                <button id="logout-btn" type="button" onclick="authLogout()" style="display:none;">Logout</button>
+                <button id="signup-btn" type="button">Sign Up</button>
+                <button id="login-btn" type="button">Login</button>
+                <button id="logout-btn" type="button" style="display:none;">Logout</button>
             </div>
 
             <div
@@ -333,6 +526,84 @@
         </main>
     </div>
 
+    <!-- Auth Required Modal -->
+    <div id="auth-required-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <button type="button" class="modal-close" onclick="closeAuthRequiredModal()">✕</button>
+            <h2>Login required</h2>
+            <p>Please sign up or log in to convert files.</p>
+            <p class="auth-highlight-message">Create an account or log in to start converting your images.</p>
+
+            <div class="modal-actions">
+                <button type="button" class="primary-btn" onclick="openAuthModal('login'); closeAuthRequiredModal();">
+                    Log In
+                </button>
+                <button type="button" class="secondary-btn-modal" onclick="openAuthModal('signup'); closeAuthRequiredModal();">
+                    Sign Up
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Form Modal -->
+    <div id="auth-modal" class="modal-overlay hidden">
+        <div class="modal-card auth-modal-card">
+            <button type="button" class="modal-close" onclick="closeAuthModal()">✕</button>
+
+            <h2 id="auth-modal-title">Log In</h2>
+            <p id="auth-modal-subtitle" class="auth-modal-subtitle">
+                Enter your email and password.
+            </p>
+
+            <form id="auth-modal-form">
+                <div class="auth-field">
+                    <label for="auth-email-input">Email</label>
+                    <input
+                        type="email"
+                        id="auth-email-input"
+                        placeholder="you@example.com"
+                        required
+                        autocomplete="email"
+                    />
+                </div>
+
+                <div class="auth-field">
+                    <label for="auth-password-input">Password</label>
+
+                    <div class="password-input-wrap">
+                        <input
+                            type="password"
+                            id="auth-password-input"
+                            placeholder="Enter your password"
+                            required
+                            autocomplete="current-password"
+                        />
+                        <button
+                            type="button"
+                            class="toggle-password-btn"
+                            id="toggle-password-btn"
+                            aria-label="Show password"
+                        >
+                            👁
+                        </button>
+                    </div>
+
+                    <p id="password-rules" class="password-rules hidden">
+                        Password must be at least 6 characters and include at least 1 uppercase letter.
+                    </p>
+                </div>
+
+                <p id="auth-modal-error" class="auth-modal-error"></p>
+
+                <div class="modal-actions">
+                    <button type="submit" class="primary-btn" id="auth-modal-submit-btn">
+                        Continue
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
     const fileInput = document.getElementById("file");
     const dropZone = document.getElementById("drop-zone");
@@ -340,10 +611,10 @@
     const previewBox = document.getElementById("main-preview");
     const previewFileName = document.getElementById("preview-file-name");
     const colorButtons = document.querySelectorAll(".color-btn");
-    const convertForm = document.getElementById("convert-form");
 
     let currentColor = "#000000";
     let selectedUploadFiles = [];
+    window.selectedUploadFiles = selectedUploadFiles;
 
     function isSameFile(fileA, fileB) {
         return (
@@ -380,6 +651,7 @@
                         class="selected-file-remove-btn"
                         onclick="removeSelectedUploadFile(${index})"
                         aria-label="Remove ${file.name}"
+                        title="Remove file"
                     >
                         ✕
                     </button>
@@ -560,9 +832,11 @@
         const authStatus = document.getElementById("auth-status");
         const authButtons = document.getElementById("auth-buttons");
         const authMessage = document.getElementById("auth-message");
+
         const signupBtn = document.getElementById("signup-btn");
         const loginBtn = document.getElementById("login-btn");
         const logoutBtn = document.getElementById("logout-btn");
+
         const convertForm = document.getElementById("convert-form");
         const convertAccessTokenInput = document.getElementById("convert_access_token");
         const monthlyAccessTokenInput = document.getElementById("monthly_access_token");
@@ -571,6 +845,18 @@
         const lifetimeCheckoutBtn = document.getElementById("lifetime-checkout-btn");
         const monthlyCheckoutForm = document.getElementById("monthly-checkout-form");
         const lifetimeCheckoutForm = document.getElementById("lifetime-checkout-form");
+
+        const authRequiredModal = document.getElementById("auth-required-modal");
+        const authModal = document.getElementById("auth-modal");
+        const authModalTitle = document.getElementById("auth-modal-title");
+        const authModalSubtitle = document.getElementById("auth-modal-subtitle");
+        const authModalForm = document.getElementById("auth-modal-form");
+        const authEmailInput = document.getElementById("auth-email-input");
+        const authPasswordInput = document.getElementById("auth-password-input");
+        const togglePasswordBtn = document.getElementById("toggle-password-btn");
+        const authModalError = document.getElementById("auth-modal-error");
+        const authModalSubmitBtn = document.getElementById("auth-modal-submit-btn");
+        const passwordRules = document.getElementById("password-rules");
 
         const authClient = window.supabase.createClient(
             "https://uqndklhxcdkoclknwohc.supabase.co",
@@ -586,6 +872,7 @@
 
         let authReady = false;
         let currentSession = null;
+        let authModalMode = "login";
 
         function showMessage(message) {
             if (!authMessage) return;
@@ -604,6 +891,121 @@
             if (loginBtn) loginBtn.disabled = disabled;
             if (logoutBtn) logoutBtn.disabled = disabled;
         }
+
+        function setAuthModalBusy(isBusy) {
+            if (authEmailInput) authEmailInput.disabled = isBusy;
+            if (authPasswordInput) authPasswordInput.disabled = isBusy;
+            if (togglePasswordBtn) togglePasswordBtn.disabled = isBusy;
+            if (authModalSubmitBtn) authModalSubmitBtn.disabled = isBusy;
+        }
+
+        function resetAuthModalFields() {
+            if (authEmailInput) authEmailInput.value = "";
+            if (authPasswordInput) {
+                authPasswordInput.value = "";
+                authPasswordInput.type = "password";
+            }
+            if (togglePasswordBtn) {
+                togglePasswordBtn.textContent = "👁";
+                togglePasswordBtn.setAttribute("aria-label", "Show password");
+            }
+            if (authModalError) authModalError.textContent = "";
+            if (passwordRules) {
+                passwordRules.classList.remove("ok", "bad");
+            }
+        }
+
+        function validateSignupPassword(password) {
+            const hasMinLength = password.length >= 6;
+            const hasUppercase = /[A-Z]/.test(password);
+            return hasMinLength && hasUppercase;
+        }
+
+        function updatePasswordRulesUI() {
+            if (!passwordRules || !authPasswordInput) return;
+
+            if (authModalMode !== "signup") {
+                passwordRules.classList.add("hidden");
+                passwordRules.classList.remove("ok", "bad");
+                return;
+            }
+
+            passwordRules.classList.remove("hidden");
+
+            const password = authPasswordInput.value || "";
+            if (!password) {
+                passwordRules.classList.remove("ok", "bad");
+                return;
+            }
+
+            if (validateSignupPassword(password)) {
+                passwordRules.classList.add("ok");
+                passwordRules.classList.remove("bad");
+            } else {
+                passwordRules.classList.add("bad");
+                passwordRules.classList.remove("ok");
+            }
+        }
+
+        function openAuthRequiredModal() {
+            if (authRequiredModal) {
+                authRequiredModal.classList.remove("hidden");
+            }
+        }
+
+        function closeAuthRequiredModal() {
+            if (authRequiredModal) {
+                authRequiredModal.classList.add("hidden");
+            }
+        }
+
+        function openAuthModal(mode) {
+            authModalMode = mode;
+
+            if (authModalTitle) {
+                authModalTitle.textContent = mode === "signup" ? "Create your account" : "Log In";
+            }
+
+            if (authModalSubtitle) {
+                authModalSubtitle.textContent =
+                    mode === "signup"
+                        ? "Enter your email and create a password."
+                        : "Enter your email and password.";
+            }
+
+            if (authModalSubmitBtn) {
+                authModalSubmitBtn.textContent = mode === "signup" ? "Create Account" : "Log In";
+            }
+
+            if (authPasswordInput) {
+                authPasswordInput.setAttribute(
+                    "autocomplete",
+                    mode === "signup" ? "new-password" : "current-password"
+                );
+            }
+
+            resetAuthModalFields();
+            updatePasswordRulesUI();
+
+            if (authModal) {
+                authModal.classList.remove("hidden");
+            }
+
+            setTimeout(() => {
+                if (authEmailInput) authEmailInput.focus();
+            }, 50);
+        }
+
+        function closeAuthModal() {
+            if (authModal) {
+                authModal.classList.add("hidden");
+            }
+        }
+
+        window.openAuthModal = openAuthModal;
+        window.closeAuthModal = closeAuthModal;
+        window.openAuthRequiredModal = openAuthRequiredModal;
+        window.closeAuthRequiredModal = closeAuthRequiredModal;
 
         function renderAuthUI() {
             if (authButtons) authButtons.style.display = "flex";
@@ -667,89 +1069,149 @@
             });
         }
 
-        window.authSignUp = async function () {
-            const email = prompt("Enter your email:");
-            if (!email) return;
+        async function handleSignup(email, password) {
+            const result = await authClient.auth.signUp({ email, password });
 
-            const password = prompt("Create a password (at least 6 characters):");
-            if (!password) return;
+            if (result.error) {
+                throw new Error(result.error.message);
+            }
 
-            showMessage("Signing up...");
-            setButtonsDisabled(true);
+            if (authModalError) {
+                authModalError.style.color = "#0f9d58";
+                authModalError.textContent = "Sign up success. You can now continue.";
+            }
 
-            try {
-                const result = await authClient.auth.signUp({ email, password });
-                console.log("SIGNUP RESULT", result);
+            currentSession = result.data?.session || currentSession;
+            authReady = true;
+            renderAuthUI();
 
-                if (result.error) {
-                    showMessage("Sign up failed: " + result.error.message);
+            setTimeout(() => {
+                closeAuthModal();
+                if (authModalError) {
+                    authModalError.style.color = "#d93025";
+                }
+            }, 700);
+        }
+
+        async function handleLogin(email, password) {
+            const result = await authClient.auth.signInWithPassword({ email, password });
+
+            if (result.error) {
+                throw new Error(result.error.message);
+            }
+
+            currentSession = result.data?.session || null;
+            authReady = true;
+            renderAuthUI();
+
+            if (authModalError) {
+                authModalError.style.color = "#0f9d58";
+                authModalError.textContent = "Login success.";
+            }
+
+            setTimeout(() => {
+                closeAuthModal();
+                if (authModalError) {
+                    authModalError.style.color = "#d93025";
+                }
+            }, 500);
+        }
+
+        if (togglePasswordBtn && authPasswordInput) {
+            togglePasswordBtn.addEventListener("click", () => {
+                const isHidden = authPasswordInput.type === "password";
+                authPasswordInput.type = isHidden ? "text" : "password";
+                togglePasswordBtn.textContent = isHidden ? "🙈" : "👁";
+                togglePasswordBtn.setAttribute(
+                    "aria-label",
+                    isHidden ? "Hide password" : "Show password"
+                );
+            });
+        }
+
+        if (authPasswordInput) {
+            authPasswordInput.addEventListener("input", updatePasswordRulesUI);
+        }
+
+        if (authModalForm) {
+            authModalForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                const email = (authEmailInput?.value || "").trim();
+                const password = authPasswordInput?.value || "";
+
+                if (authModalError) authModalError.textContent = "";
+
+                if (!email) {
+                    if (authModalError) authModalError.textContent = "Please enter your email.";
                     return;
                 }
 
-                showMessage("Sign up success");
-            } catch (err) {
-                console.error("authSignUp crashed:", err);
-                showMessage("Sign up crashed: " + err.message);
-            } finally {
-                setButtonsDisabled(false);
-            }
-        };
-
-        window.authLogin = async function () {
-            const email = prompt("Enter your email:");
-            if (!email) return;
-
-            const password = prompt("Enter your password:");
-            if (!password) return;
-
-            showMessage("Logging in...");
-            setButtonsDisabled(true);
-
-            try {
-                const result = await authClient.auth.signInWithPassword({ email, password });
-                console.log("LOGIN RESULT", result);
-
-                if (result.error) {
-                    showMessage("Login failed: " + result.error.message);
+                if (!password) {
+                    if (authModalError) authModalError.textContent = "Please enter your password.";
                     return;
                 }
 
-                currentSession = result.data?.session || null;
-                authReady = true;
-                renderAuthUI();
-                showMessage("Login success");
-            } catch (err) {
-                console.error("authLogin crashed:", err);
-                showMessage("Login crashed: " + err.message);
-            } finally {
-                setButtonsDisabled(false);
-            }
-        };
-
-        window.authLogout = async function () {
-            showMessage("Logging out...");
-            setButtonsDisabled(true);
-
-            try {
-                const result = await authClient.auth.signOut();
-                console.log("LOGOUT RESULT", result);
-
-                if (result.error) {
-                    showMessage("Logout failed: " + result.error.message);
+                if (authModalMode === "signup" && !validateSignupPassword(password)) {
+                    if (authModalError) {
+                        authModalError.textContent =
+                            "Password must be at least 6 characters and include at least 1 uppercase letter.";
+                    }
+                    updatePasswordRulesUI();
                     return;
                 }
 
-                currentSession = null;
-                authReady = true;
-                renderAuthUI();
-                showMessage("Logged out");
-            } catch (err) {
-                console.error("authLogout crashed:", err);
-                showMessage("Logout crashed: " + err.message);
-            } finally {
-                setButtonsDisabled(false);
-            }
-        };
+                setAuthModalBusy(true);
+
+                try {
+                    if (authModalMode === "signup") {
+                        await handleSignup(email, password);
+                    } else {
+                        await handleLogin(email, password);
+                    }
+                } catch (err) {
+                    if (authModalError) {
+                        authModalError.style.color = "#d93025";
+                        authModalError.textContent = err.message || "Authentication failed.";
+                    }
+                } finally {
+                    setAuthModalBusy(false);
+                }
+            });
+        }
+
+        if (signupBtn) {
+            signupBtn.addEventListener("click", () => openAuthModal("signup"));
+        }
+
+        if (loginBtn) {
+            loginBtn.addEventListener("click", () => openAuthModal("login"));
+        }
+
+        if (logoutBtn) {
+            logoutBtn.addEventListener("click", async () => {
+                showMessage("Logging out...");
+                setButtonsDisabled(true);
+
+                try {
+                    const result = await authClient.auth.signOut();
+
+                    if (result.error) {
+                        showMessage("Logout failed: " + result.error.message);
+                        return;
+                    }
+
+                    currentSession = null;
+                    authReady = true;
+                    renderAuthUI();
+                    showMessage("Logged out");
+                } catch (err) {
+                    showMessage("Logout crashed: " + err.message);
+                } finally {
+                    setButtonsDisabled(false);
+                }
+            });
+        }
 
         if (convertForm) {
             convertForm.addEventListener("submit", async function (e) {
@@ -763,30 +1225,23 @@
                 }
 
                 if (!currentSession?.user) {
-                    showMessage("Please log in first.");
+                    openAuthRequiredModal();
                     return;
                 }
 
-                if (!window.selectedUploadFiles && typeof selectedUploadFiles === "undefined") {
+                if (!window.selectedUploadFiles || window.selectedUploadFiles.length === 0) {
                     showMessage("Please add at least one image file.");
                     return;
                 }
 
-                if (typeof selectedUploadFiles !== "undefined") {
-                    if (selectedUploadFiles.length === 0) {
-                        showMessage("Please add at least one image file.");
-                        return;
-                    }
+                const dataTransfer = new DataTransfer();
+                window.selectedUploadFiles.forEach((file) => {
+                    dataTransfer.items.add(file);
+                });
 
-                    const dataTransfer = new DataTransfer();
-                    selectedUploadFiles.forEach((file) => {
-                        dataTransfer.items.add(file);
-                    });
-
-                    const liveFileInput = document.getElementById("file");
-                    if (liveFileInput) {
-                        liveFileInput.files = dataTransfer.files;
-                    }
+                const liveFileInput = document.getElementById("file");
+                if (liveFileInput) {
+                    liveFileInput.files = dataTransfer.files;
                 }
 
                 setTokenInputs(currentSession.access_token || "");
@@ -807,7 +1262,7 @@
                 }
 
                 if (!currentSession?.user) {
-                    showMessage("Please log in first.");
+                    openAuthRequiredModal();
                     return;
                 }
 
@@ -828,7 +1283,7 @@
                 }
 
                 if (!currentSession?.user) {
-                    showMessage("Please log in first.");
+                    openAuthRequiredModal();
                     return;
                 }
 
@@ -838,14 +1293,41 @@
         }
 
         authClient.auth.onAuthStateChange(function (event, session) {
-            console.log("AUTH STATE CHANGED", event, session);
             currentSession = session || null;
 
-            if (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "TOKEN_REFRESHED") {
+            if (
+                event === "INITIAL_SESSION" ||
+                event === "SIGNED_IN" ||
+                event === "SIGNED_OUT" ||
+                event === "TOKEN_REFRESHED"
+            ) {
                 authReady = true;
                 renderAuthUI();
             }
         });
+
+        window.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") {
+                closeAuthModal();
+                closeAuthRequiredModal();
+            }
+        });
+
+        if (authModal) {
+            authModal.addEventListener("click", function (e) {
+                if (e.target === authModal) {
+                    closeAuthModal();
+                }
+            });
+        }
+
+        if (authRequiredModal) {
+            authRequiredModal.addEventListener("click", function (e) {
+                if (e.target === authRequiredModal) {
+                    closeAuthRequiredModal();
+                }
+            });
+        }
 
         window.addEventListener("load", function () {
             authReady = false;
