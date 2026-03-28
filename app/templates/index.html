@@ -38,6 +38,46 @@
 
     <link rel="stylesheet" href="/static/style.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        .selected-files {
+            margin-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .selected-file-chip-row {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(6px);
+        }
+
+        .selected-file-chip {
+            font-size: 14px;
+            line-height: 1;
+        }
+
+        .selected-file-remove-btn {
+            border: none;
+            background: transparent;
+            color: inherit;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            opacity: 0.75;
+        }
+
+        .selected-file-remove-btn:hover {
+            opacity: 1;
+        }
+    </style>
 </head>
 <body>
     <div class="page">
@@ -101,7 +141,6 @@
                                 name="files"
                                 accept=".png,.jpg,.jpeg,.webp"
                                 multiple
-                                required
                             />
                             <div class="drop-zone-content">
                                 <div class="upload-icon">✦</div>
@@ -297,30 +336,87 @@
     <script>
     const fileInput = document.getElementById("file");
     const dropZone = document.getElementById("drop-zone");
-    const selectedFiles = document.getElementById("selected-files");
+    const selectedFilesContainer = document.getElementById("selected-files");
     const previewBox = document.getElementById("main-preview");
     const previewFileName = document.getElementById("preview-file-name");
     const colorButtons = document.querySelectorAll(".color-btn");
+    const convertForm = document.getElementById("convert-form");
 
     let currentColor = "#000000";
+    let selectedUploadFiles = [];
 
-    function renderSelectedFiles(files) {
-        if (!selectedFiles) return;
+    function isSameFile(fileA, fileB) {
+        return (
+            fileA.name === fileB.name &&
+            fileA.size === fileB.size &&
+            fileA.lastModified === fileB.lastModified
+        );
+    }
 
-        if (!files || files.length === 0) {
-            selectedFiles.innerHTML = "";
+    function syncFileInputWithSelectedFiles() {
+        if (!fileInput) return;
+
+        const dataTransfer = new DataTransfer();
+        selectedUploadFiles.forEach((file) => {
+            dataTransfer.items.add(file);
+        });
+        fileInput.files = dataTransfer.files;
+    }
+
+    function renderSelectedFiles() {
+        if (!selectedFilesContainer) return;
+
+        if (!selectedUploadFiles.length) {
+            selectedFilesContainer.innerHTML = "";
             return;
         }
 
-        const names = Array.from(files).map(
-            (file) => `<span class="selected-file-chip">${file.name}</span>`
-        );
-        selectedFiles.innerHTML = names.join("");
+        selectedFilesContainer.innerHTML = selectedUploadFiles
+            .map((file, index) => `
+                <div class="selected-file-chip-row">
+                    <span class="selected-file-chip">${file.name}</span>
+                    <button
+                        type="button"
+                        class="selected-file-remove-btn"
+                        onclick="removeSelectedUploadFile(${index})"
+                        aria-label="Remove ${file.name}"
+                    >
+                        ✕
+                    </button>
+                </div>
+            `)
+            .join("");
     }
+
+    function addFiles(newFiles) {
+        const incomingFiles = Array.from(newFiles || []);
+
+        incomingFiles.forEach((newFile) => {
+            const exists = selectedUploadFiles.some((existingFile) =>
+                isSameFile(existingFile, newFile)
+            );
+
+            if (!exists) {
+                selectedUploadFiles.push(newFile);
+            }
+        });
+
+        syncFileInputWithSelectedFiles();
+        renderSelectedFiles();
+    }
+
+    function removeSelectedUploadFile(index) {
+        selectedUploadFiles.splice(index, 1);
+        syncFileInputWithSelectedFiles();
+        renderSelectedFiles();
+    }
+
+    window.removeSelectedUploadFile = removeSelectedUploadFile;
 
     if (fileInput) {
         fileInput.addEventListener("change", () => {
-            renderSelectedFiles(fileInput.files);
+            addFiles(fileInput.files);
+            fileInput.value = "";
         });
     }
 
@@ -341,8 +437,7 @@
 
         dropZone.addEventListener("drop", (e) => {
             const files = e.dataTransfer.files;
-            fileInput.files = files;
-            renderSelectedFiles(files);
+            addFiles(files);
         });
     }
 
@@ -456,9 +551,10 @@
     window.addEventListener("load", () => {
         bindFileRowEvents();
         renderPreview();
+        renderSelectedFiles();
     });
     </script>
-    
+
     <script>
     (function () {
         const authStatus = document.getElementById("auth-status");
@@ -669,6 +765,28 @@
                 if (!currentSession?.user) {
                     showMessage("Please log in first.");
                     return;
+                }
+
+                if (!window.selectedUploadFiles && typeof selectedUploadFiles === "undefined") {
+                    showMessage("Please add at least one image file.");
+                    return;
+                }
+
+                if (typeof selectedUploadFiles !== "undefined") {
+                    if (selectedUploadFiles.length === 0) {
+                        showMessage("Please add at least one image file.");
+                        return;
+                    }
+
+                    const dataTransfer = new DataTransfer();
+                    selectedUploadFiles.forEach((file) => {
+                        dataTransfer.items.add(file);
+                    });
+
+                    const liveFileInput = document.getElementById("file");
+                    if (liveFileInput) {
+                        liveFileInput.files = dataTransfer.files;
+                    }
                 }
 
                 setTokenInputs(currentSession.access_token || "");
