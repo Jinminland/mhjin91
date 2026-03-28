@@ -479,9 +479,61 @@
 
         const authClient = window.supabase.createClient(
             "https://uqndklhxcdkoclknwohc.supabase.co",
-            "sb_publishable_g-_XiNAsgDY9uw43XVzDAA_wWMSFpga"
+            "sb_publishable_g-_XiNAsgDY9uw43XVzDAA_wWMSFpga",
+            {
+                auth: {
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: true
+                }
+            }
         );
 
+        if (convertForm) {
+            convertForm.addEventListener("submit", async function (e) {
+                e.preventDefault();
+
+                const session = await getSession();
+                if (!session?.user) {
+                    showMessage("Please log in first.");
+                    return;
+                }
+
+                setTokenInputs(session.access_token || "");
+                showMessage("Converting...");
+                convertForm.submit();
+            });
+        }
+
+        if (monthlyCheckoutForm) {
+            monthlyCheckoutForm.addEventListener("submit", async function (e) {
+                e.preventDefault();
+
+                const session = await getSession();
+                if (!session?.user) {
+                    showMessage("Please log in first.");
+                    return;
+                }
+
+                setTokenInputs(session.access_token || "");
+                monthlyCheckoutForm.submit();
+            });
+        }
+
+        if (lifetimeCheckoutForm) {
+            lifetimeCheckoutForm.addEventListener("submit", async function (e) {
+                e.preventDefault();
+
+                const session = await getSession();
+                if (!session?.user) {
+                    showMessage("Please log in first.");
+                    return;
+                }
+
+                setTokenInputs(session.access_token || "");
+                lifetimeCheckoutForm.submit();
+            });
+        }
         function showMessage(message) {
             if (!authMessage) return;
             authMessage.textContent = message || "";
