@@ -44,12 +44,12 @@
         <header class="hero">
             <div
                 id="auth-status"
-                style="position:absolute; top:20px; right:150px; color:white; font-size:14px; z-index:1000; max-width:240px; text-align:right;"
+                style="position:absolute; top:20px; right:150px; color:white; font-size:14px; z-index:1000; max-width:240px; text-align:right; display:none;"
             ></div>
 
             <div
                 id="auth-buttons"
-                style="position:absolute; top:20px; right:20px; display:flex; gap:8px; z-index:1000;"
+                style="position:absolute; top:20px; right:20px; display:none; gap:8px; z-index:1000;"
             >
                 <button id="signup-btn" type="button" onclick="authSignUp()">Sign Up</button>
                 <button id="login-btn" type="button" onclick="authLogin()">Login</button>
@@ -412,9 +412,7 @@
     });
 
     function downloadSVG(svgText, filename = "converted.svg") {
-        if (!svgText) {
-            return;
-        }
+        if (!svgText) return;
 
         const blob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
         const url = URL.createObjectURL(blob);
@@ -464,6 +462,7 @@
     <script>
     (function () {
         const authStatus = document.getElementById("auth-status");
+        const authButtons = document.getElementById("auth-buttons");
         const authMessage = document.getElementById("auth-message");
         const signupBtn = document.getElementById("signup-btn");
         const loginBtn = document.getElementById("login-btn");
@@ -489,62 +488,9 @@
             }
         );
 
-        if (convertForm) {
-            convertForm.addEventListener("submit", async function (e) {
-                e.preventDefault();
-
-                const session = await getSession();
-                if (!session?.user) {
-                    showMessage("Please log in first.");
-                    return;
-                }
-
-                setTokenInputs(session.access_token || "");
-                showMessage("Converting...");
-                convertForm.submit();
-            });
-        }
-
-        if (monthlyCheckoutForm) {
-            monthlyCheckoutForm.addEventListener("submit", async function (e) {
-                e.preventDefault();
-
-                const session = await getSession();
-                if (!session?.user) {
-                    showMessage("Please log in first.");
-                    return;
-                }
-
-                setTokenInputs(session.access_token || "");
-                monthlyCheckoutForm.submit();
-            });
-        }
-
-        if (lifetimeCheckoutForm) {
-            lifetimeCheckoutForm.addEventListener("submit", async function (e) {
-                e.preventDefault();
-
-                const session = await getSession();
-                if (!session?.user) {
-                    showMessage("Please log in first.");
-                    return;
-                }
-
-                setTokenInputs(session.access_token || "");
-                lifetimeCheckoutForm.submit();
-            });
-        }
         function showMessage(message) {
             if (!authMessage) return;
             authMessage.textContent = message || "";
-        }
-
-        function setButtonsDisabled(disabled) {
-            if (signupBtn) signupBtn.disabled = disabled;
-            if (loginBtn) loginBtn.disabled = disabled;
-            if (logoutBtn) logoutBtn.disabled = disabled;
-            if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = disabled || monthlyCheckoutBtn.disabled;
-            if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = disabled || lifetimeCheckoutBtn.disabled;
         }
 
         function setTokenInputs(token) {
@@ -554,11 +500,17 @@
             if (lifetimeAccessTokenInput) lifetimeAccessTokenInput.value = safeToken;
         }
 
+        function setButtonsDisabled(disabled) {
+            if (signupBtn) signupBtn.disabled = disabled;
+            if (loginBtn) loginBtn.disabled = disabled;
+            if (logoutBtn) logoutBtn.disabled = disabled;
+        }
+
         async function withTimeout(promise, label, ms = 15000) {
             return Promise.race([
                 promise,
                 new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error(label + " timed out after 15 seconds")), ms)
+                    setTimeout(() => reject(new Error(`${label} timed out after 15 seconds`)), ms)
                 )
             ]);
         }
@@ -587,6 +539,9 @@
         async function refreshAuthUI() {
             const session = await getSession();
 
+            if (authButtons) authButtons.style.display = "flex";
+            if (authStatus) authStatus.style.display = "block";
+
             if (!session || !session.user) {
                 if (authStatus) authStatus.textContent = "";
                 if (signupBtn) signupBtn.style.display = "inline-block";
@@ -607,7 +562,6 @@
             if (logoutBtn) logoutBtn.style.display = "inline-block";
             if (monthlyCheckoutBtn) monthlyCheckoutBtn.disabled = false;
             if (lifetimeCheckoutBtn) lifetimeCheckoutBtn.disabled = false;
-
             setTokenInputs(token);
         }
 
@@ -709,37 +663,47 @@
 
         if (convertForm) {
             convertForm.addEventListener("submit", async function (e) {
+                e.preventDefault();
+
                 const session = await getSession();
                 if (!session?.user) {
-                    e.preventDefault();
                     showMessage("Please log in first.");
                     return;
                 }
+
                 setTokenInputs(session.access_token || "");
+                showMessage("Converting...");
+                convertForm.submit();
             });
         }
 
         if (monthlyCheckoutForm) {
             monthlyCheckoutForm.addEventListener("submit", async function (e) {
+                e.preventDefault();
+
                 const session = await getSession();
                 if (!session?.user) {
-                    e.preventDefault();
                     showMessage("Please log in first.");
                     return;
                 }
+
                 setTokenInputs(session.access_token || "");
+                monthlyCheckoutForm.submit();
             });
         }
 
         if (lifetimeCheckoutForm) {
             lifetimeCheckoutForm.addEventListener("submit", async function (e) {
+                e.preventDefault();
+
                 const session = await getSession();
                 if (!session?.user) {
-                    e.preventDefault();
                     showMessage("Please log in first.");
                     return;
                 }
+
                 setTokenInputs(session.access_token || "");
+                lifetimeCheckoutForm.submit();
             });
         }
 
@@ -749,7 +713,9 @@
         });
 
         window.addEventListener("load", async function () {
+            showMessage("Checking session...");
             await refreshAuthUI();
+            showMessage("");
         });
     })();
     </script>
