@@ -41,31 +41,28 @@ def image_to_svg(
 
         img = Image.open(input_path).convert("RGBA")
 
-        # 1) 흰 배경 합성
+        # 1) 투명 여백 완전 제거
+        if remove_whitespace:
+            alpha = img.getchannel("A")
+            bbox = alpha.getbbox()
+            if bbox:
+                img = img.crop(bbox)
+
+        # 2) 흰 배경 합성
         background = Image.new("RGBA", img.size, (255, 255, 255, 255))
         background.alpha_composite(img)
 
-        # 2) 그레이스케일 변환
+        # 3) 그레이스케일 + 대비 보정
         gray = background.convert("L")
-
-        # 3) 자동 대비 보정 (옅은 선 살리기)
         gray = ImageOps.autocontrast(gray)
 
-        # 4) threshold로 직접 흑백화
-        # 숫자를 낮추면 더 많은 선이 남고,
-        # 높이면 연한 부분이 더 날아감
+        # 4) 흑백화
         threshold = 200
         bw = gray.point(lambda p: 0 if p < threshold else 255, mode="1")
 
-        # 5) 여백 제거
-        if remove_whitespace:
-            bbox = bw.getbbox()
-            if bbox:
-                bw = bw.crop(bbox)
-
         bw.save(bmp_path)
 
-        # 6) potrace 옵션 조정
+        # 5) potrace
         cmd = [
             potrace_path,
             bmp_path,
