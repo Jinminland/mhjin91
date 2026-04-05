@@ -30,7 +30,8 @@ def run_potrace(
     potrace_path: str,
     bmp_path: str,
     output_path: str,
-    turdsize: str
+    opttolerance: str,
+    turdsize: str,
 ) -> str:
     cmd = [
         potrace_path,
@@ -39,13 +40,17 @@ def run_potrace(
         "-o", output_path,
         "--flat",
         "--alphamax", "0.7",
-        "--opttolerance", "0.1",
-        "--turdsize", turdsize
+        "--opttolerance", opttolerance,
+        "--turdsize", turdsize,
     ]
     subprocess.run(cmd, check=True)
 
     with open(output_path, "r", encoding="utf-8") as f:
         return f.read()
+
+
+def get_svg_size_kb(svg_content: str) -> float:
+    return len(svg_content.encode("utf-8")) / 1024
 
 
 def image_to_svg(
@@ -66,7 +71,7 @@ def image_to_svg(
 
         img = Image.open(input_path).convert("RGBA")
 
-        # 1) 투명 여백 완전 제거
+        # 1) 투명 여백 제거
         if remove_whitespace:
             alpha = img.getchannel("A")
             bbox = alpha.getbbox()
@@ -86,22 +91,42 @@ def image_to_svg(
         bw = gray.point(lambda p: 0 if p < threshold else 255, mode="1")
         bw.save(bmp_path)
 
-        # 5) 기본 변환 후, 150KB 초과면 작은 점/노이즈 제거 강하게 해서 재시도
-        turdsize_candidates = ["1", "2", "4", "6", "8"]
+        # 5) 기본값부터 시작해서 점진적으로 압축
+        # 앞쪽일수록 품질 우선, 뒤로 갈수록 용량 우선
+        attempts = [
+            {"opttolerance": "0.1", "turdsize": "1"},
+            {"opttolerance": "0.1", "turdsize": "2"},
+            {"opttolerance": "0.1", "turdsize": "4"},
+            {"opttolerance": "0.2", "turdsize": "4"},
+            {"opttolerance": "0.3", "turdsize": "4"},
+            {"opttolerance": "0.3", "turdsize": "6"},
+            {"opttolerance": "0.5", "turdsize": "6"},
+            {"opttolerance": "0.7", "turdsize": "8"},
+        ]
 
-        for turdsize in turdsize_candidates:
+        best_svg = None
+        best_size = None
+
+        for attempt in attempts:
             svg_content = run_potrace(
                 potrace_path=potrace_path,
                 bmp_path=bmp_path,
                 output_path=output_path,
-                turdsize=turdsize
+                opttolerance=attempt["opttolerance"],
+                turdsize=attempt["turdsize"],
             )
 
             svg_content = svg_content.replace("<path", f'<path fill="{fill_color}"')
+            size_kb = get_svg_size_kb(svg_content)
 
-            size_kb = len(svg_content.encode("utf-8")) / 1024
+            # 가장 작은 결과도 같이 기억
+            if best_svg is None or size_kb < best_size:
+                best_svg = svg_content
+                best_size = size_kb
+
+            # 150KB 이하가 되면 바로 반환
             if size_kb <= MAX_SVG_KB:
                 return svg_content
 
-        # 끝까지 150KB 이하가 안 되면 마지막 결과 반환
-        return svg_content
+        # 끝까지 안 되면 가장 작은 결과 반환
+        return best_svg
