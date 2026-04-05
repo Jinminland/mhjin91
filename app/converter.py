@@ -57,7 +57,8 @@ def image_to_svg(
     file_bytes: bytes,
     original_filename: str,
     fill_color: str = "black",
-    remove_whitespace: bool = False
+    remove_whitespace: bool = False,
+    compress_more: bool = False,
 ) -> tuple[str, float]:
     potrace_path = get_potrace_path()
 
@@ -91,18 +92,27 @@ def image_to_svg(
         bw = gray.point(lambda p: 0 if p < threshold else 255, mode="1")
         bw.save(bmp_path)
 
-        # 5) 기본값부터 시작해서 점진적으로 압축
-        # 앞쪽일수록 품질 우선, 뒤로 갈수록 용량 우선
-        attempts = [
-            {"opttolerance": "0.1", "turdsize": "1"},
-            {"opttolerance": "0.1", "turdsize": "2"},
-            {"opttolerance": "0.1", "turdsize": "4"},
-            {"opttolerance": "0.2", "turdsize": "4"},
-            {"opttolerance": "0.3", "turdsize": "4"},
-            {"opttolerance": "0.3", "turdsize": "6"},
-            {"opttolerance": "0.5", "turdsize": "6"},
-            {"opttolerance": "0.7", "turdsize": "8"},
-        ]
+        # 5) 압축 단계
+        if compress_more:
+            attempts = [
+                {"opttolerance": "0.3", "turdsize": "4"},
+                {"opttolerance": "0.5", "turdsize": "6"},
+                {"opttolerance": "0.7", "turdsize": "8"},
+                {"opttolerance": "1.0", "turdsize": "10"},
+                {"opttolerance": "1.2", "turdsize": "12"},
+                {"opttolerance": "1.5", "turdsize": "14"},
+            ]
+        else:
+            attempts = [
+                {"opttolerance": "0.1", "turdsize": "1"},
+                {"opttolerance": "0.1", "turdsize": "2"},
+                {"opttolerance": "0.1", "turdsize": "4"},
+                {"opttolerance": "0.2", "turdsize": "4"},
+                {"opttolerance": "0.3", "turdsize": "4"},
+                {"opttolerance": "0.3", "turdsize": "6"},
+                {"opttolerance": "0.5", "turdsize": "6"},
+                {"opttolerance": "0.7", "turdsize": "8"},
+            ]
 
         best_svg = None
         best_size = None
@@ -119,14 +129,11 @@ def image_to_svg(
             svg_content = svg_content.replace("<path", f'<path fill="{fill_color}"')
             size_kb = get_svg_size_kb(svg_content)
 
-            # 가장 작은 결과 기억
             if best_svg is None or best_size is None or size_kb < best_size:
                 best_svg = svg_content
                 best_size = size_kb
 
-            # 150KB 이하가 되면 바로 반환
             if size_kb <= MAX_SVG_KB:
                 return svg_content, round(size_kb, 1)
 
-        # 끝까지 안 되면 가장 작은 결과 반환
         return best_svg, round(best_size, 1)
