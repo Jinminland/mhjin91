@@ -1,5 +1,4 @@
 import os
-import re
 import shutil
 import subprocess
 import tempfile
@@ -54,14 +53,7 @@ def get_svg_size_kb(svg_content: str) -> float:
     return len(svg_content.encode("utf-8")) / 1024
 
 
-def minify_svg(svg_content: str) -> str:
-    svg_content = re.sub(r">\s+<", "><", svg_content)
-    svg_content = re.sub(r"\s{2,}", " ", svg_content)
-    svg_content = svg_content.replace("\n", "").replace("\t", "")
-    return svg_content.strip()
-
-
-def make_bw_image(
+def prepare_bw_image(
     img: Image.Image,
     remove_whitespace: bool,
     threshold: int,
@@ -76,7 +68,7 @@ def make_bw_image(
         if bbox:
             img = img.crop(bbox)
 
-    # 2) 강제 압축 모드에서는 이미지 자체를 축소
+    # 2) 강제 압축 모드에서만 이미지 축소 가능
     if scale < 1.0:
         new_w = max(1, int(img.width * scale))
         new_h = max(1, int(img.height * scale))
@@ -114,11 +106,11 @@ def image_to_svg(
 
         original_img = Image.open(input_path).convert("RGBA")
 
-        # =========================
-        # 기본 모드: 그냥 SVG 변환만
-        # =========================
+        # -------------------------
+        # 기본 모드: 그냥 1회 변환
+        # -------------------------
         if not compress_more:
-            bw = make_bw_image(
+            bw = prepare_bw_image(
                 img=original_img,
                 remove_whitespace=remove_whitespace,
                 threshold=200,
@@ -135,19 +127,20 @@ def image_to_svg(
             )
 
             svg_content = svg_content.replace("<path", f'<path fill="{fill_color}"')
-            svg_content = minify_svg(svg_content)
             size_kb = get_svg_size_kb(svg_content)
             return svg_content, round(size_kb, 1)
 
-        # =========================
-        # 강제 압축 모드: 150KB 이하가 될 때까지 계속 시도
-        # =========================
+        # -------------------------
+        # 압축 모드: 150KB 이하 강제 시도
+        # -------------------------
         attempts = [
-            {"scale": 1.00, "threshold": 200, "opttolerance": "0.3", "turdsize": "4"},
-            {"scale": 1.00, "threshold": 210, "opttolerance": "0.5", "turdsize": "6"},
-            {"scale": 0.90, "threshold": 210, "opttolerance": "0.7", "turdsize": "8"},
-            {"scale": 0.80, "threshold": 220, "opttolerance": "1.0", "turdsize": "10"},
-            {"scale": 0.70, "threshold": 225, "opttolerance": "1.2", "turdsize": "12"},
+            {"scale": 1.00, "threshold": 200, "opttolerance": "0.1", "turdsize": "1"},
+            {"scale": 1.00, "threshold": 200, "opttolerance": "0.1", "turdsize": "2"},
+            {"scale": 1.00, "threshold": 200, "opttolerance": "0.2", "turdsize": "4"},
+            {"scale": 1.00, "threshold": 210, "opttolerance": "0.3", "turdsize": "6"},
+            {"scale": 0.90, "threshold": 210, "opttolerance": "0.5", "turdsize": "8"},
+            {"scale": 0.80, "threshold": 220, "opttolerance": "0.7", "turdsize": "10"},
+            {"scale": 0.70, "threshold": 225, "opttolerance": "1.0", "turdsize": "12"},
             {"scale": 0.60, "threshold": 230, "opttolerance": "1.5", "turdsize": "14"},
             {"scale": 0.50, "threshold": 235, "opttolerance": "2.0", "turdsize": "16"},
             {"scale": 0.40, "threshold": 240, "opttolerance": "2.5", "turdsize": "20"},
@@ -158,7 +151,7 @@ def image_to_svg(
         best_size = None
 
         for attempt in attempts:
-            bw = make_bw_image(
+            bw = prepare_bw_image(
                 img=original_img.copy(),
                 remove_whitespace=remove_whitespace,
                 threshold=attempt["threshold"],
@@ -175,7 +168,6 @@ def image_to_svg(
             )
 
             svg_content = svg_content.replace("<path", f'<path fill="{fill_color}"')
-            svg_content = minify_svg(svg_content)
             size_kb = get_svg_size_kb(svg_content)
 
             if best_svg is None or best_size is None or size_kb < best_size:
@@ -185,5 +177,5 @@ def image_to_svg(
             if size_kb <= MAX_SVG_KB:
                 return svg_content, round(size_kb, 1)
 
-        # 끝까지 못 맞췄으면 가장 작은 결과 반환
+        # 끝까지 150KB 이하가 안 되면 가장 작은 결과 반환
         return best_svg, round(best_size, 1)
