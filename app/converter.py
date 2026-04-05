@@ -2,7 +2,7 @@ import os
 import shutil
 import subprocess
 import tempfile
-from PIL import Image
+from PIL import Image, ImageOps
 
 
 def get_potrace_path() -> str:
@@ -41,23 +41,41 @@ def image_to_svg(
 
         img = Image.open(input_path).convert("RGBA")
 
+        # 1) 흰 배경 합성
         background = Image.new("RGBA", img.size, (255, 255, 255, 255))
-        background.paste(img, mask=img.split()[3])
+        background.alpha_composite(img)
 
-        bmp_img = background.convert("L")
+        # 2) 그레이스케일 변환
+        gray = background.convert("L")
 
-        # 여백 제거
+        # 3) 자동 대비 보정 (옅은 선 살리기)
+        gray = ImageOps.autocontrast(gray)
+
+        # 4) threshold로 직접 흑백화
+        # 숫자를 낮추면 더 많은 선이 남고,
+        # 높이면 연한 부분이 더 날아감
+        threshold = 200
+        bw = gray.point(lambda p: 0 if p < threshold else 255, mode="1")
+
+        # 5) 여백 제거
         if remove_whitespace:
-            # 흰 배경(255)에 가까운 부분은 배경으로 보고, 나머지 기준으로 bbox 계산
-            threshold = 250
-            binary = bmp_img.point(lambda p: 0 if p > threshold else 255, mode="1")
-            bbox = binary.getbbox()
+            bbox = bw.getbbox()
             if bbox:
-                bmp_img = bmp_img.crop(bbox)
+                bw = bw.crop(bbox)
 
-        bmp_img.save(bmp_path)
+        bw.save(bmp_path)
 
-        cmd = [potrace_path, bmp_path, "--svg", "-o", output_path]
+        # 6) potrace 옵션 조정
+        cmd = [
+            potrace_path,
+            bmp_path,
+            "--svg",
+            "-o", output_path,
+            "--flat",
+            "--alphamax", "0.7",
+            "--opttolerance", "0.1",
+            "--turdsize", "1"
+        ]
         subprocess.run(cmd, check=True)
 
         with open(output_path, "r", encoding="utf-8") as f:
