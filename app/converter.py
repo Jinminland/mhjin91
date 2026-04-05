@@ -5,6 +5,9 @@ import tempfile
 from PIL import Image, ImageOps
 
 
+MAX_SVG_KB = 150
+
+
 def get_potrace_path() -> str:
     potrace_path = os.getenv("POTRACE_PATH")
 
@@ -21,6 +24,28 @@ def get_potrace_path() -> str:
         "potrace를 찾을 수 없습니다. "
         "POTRACE_PATH 환경변수를 설정하거나, potrace를 설치해야 합니다."
     )
+
+
+def run_potrace(
+    potrace_path: str,
+    bmp_path: str,
+    output_path: str,
+    turdsize: str
+) -> str:
+    cmd = [
+        potrace_path,
+        bmp_path,
+        "--svg",
+        "-o", output_path,
+        "--flat",
+        "--alphamax", "0.7",
+        "--opttolerance", "0.1",
+        "--turdsize", turdsize
+    ]
+    subprocess.run(cmd, check=True)
+
+    with open(output_path, "r", encoding="utf-8") as f:
+        return f.read()
 
 
 def image_to_svg(
@@ -59,25 +84,24 @@ def image_to_svg(
         # 4) 흑백화
         threshold = 200
         bw = gray.point(lambda p: 0 if p < threshold else 255, mode="1")
-
         bw.save(bmp_path)
 
-        # 5) potrace
-        cmd = [
-            potrace_path,
-            bmp_path,
-            "--svg",
-            "-o", output_path,
-            "--flat",
-            "--alphamax", "0.7",
-            "--opttolerance", "0.1",
-            "--turdsize", "1"
-        ]
-        subprocess.run(cmd, check=True)
+        # 5) 기본 변환 후, 150KB 초과면 작은 점/노이즈 제거 강하게 해서 재시도
+        turdsize_candidates = ["1", "2", "4", "6", "8"]
 
-        with open(output_path, "r", encoding="utf-8") as f:
-            svg_content = f.read()
+        for turdsize in turdsize_candidates:
+            svg_content = run_potrace(
+                potrace_path=potrace_path,
+                bmp_path=bmp_path,
+                output_path=output_path,
+                turdsize=turdsize
+            )
 
-        svg_content = svg_content.replace("<path", f'<path fill="{fill_color}"')
+            svg_content = svg_content.replace("<path", f'<path fill="{fill_color}"')
 
+            size_kb = len(svg_content.encode("utf-8")) / 1024
+            if size_kb <= MAX_SVG_KB:
+                return svg_content
+
+        # 끝까지 150KB 이하가 안 되면 마지막 결과 반환
         return svg_content
