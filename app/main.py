@@ -239,6 +239,7 @@ async def get_today_usage_state(email: str):
 async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
+
 @app.get("/sitemap.xml")
 async def sitemap():
     xml_content = """<?xml version="1.0" encoding="UTF-8"?>
@@ -405,7 +406,7 @@ async def convert_images(
             if not data:
                 continue
 
-            svg = image_to_svg(
+            svg, size_kb = image_to_svg(
                 data,
                 file.filename,
                 remove_whitespace=bool(remove_whitespace),
@@ -415,6 +416,7 @@ async def convert_images(
                 "filename": file.filename,
                 "svg_filename": f"{os.path.splitext(file.filename)[0]}.svg",
                 "svg": svg,
+                "size_kb": size_kb,
             })
             converted += 1
 
@@ -429,7 +431,10 @@ async def convert_images(
 
         return templates.TemplateResponse(
             "index.html",
-            {"request": request, "results": results},
+            {
+                "request": request,
+                "results": results,
+            },
         )
 
     except Exception as e:

@@ -58,7 +58,7 @@ def image_to_svg(
     original_filename: str,
     fill_color: str = "black",
     remove_whitespace: bool = False
-) -> str:
+) -> tuple[str, float]:
     potrace_path = get_potrace_path()
 
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -119,14 +119,14 @@ def image_to_svg(
             svg_content = svg_content.replace("<path", f'<path fill="{fill_color}"')
             size_kb = get_svg_size_kb(svg_content)
 
-            # 가장 작은 결과도 같이 기억
-            if best_svg is None or size_kb < best_size:
+            # 가장 작은 결과 기억
+            if best_svg is None or best_size is None or size_kb < best_size:
                 best_svg = svg_content
                 best_size = size_kb
 
             # 150KB 이하가 되면 바로 반환
             if size_kb <= MAX_SVG_KB:
-                return svg_content
+                return svg_content, round(size_kb, 1)
 
         # 끝까지 안 되면 가장 작은 결과 반환
-        return best_svg
+        return best_svg, round(best_size, 1)
