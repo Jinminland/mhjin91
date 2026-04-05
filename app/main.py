@@ -473,6 +473,38 @@ async def download_all(results_json: str = Form(...)):
         return Response(f"ZIP download failed: {str(e)}", status_code=500)
 
 
+@app.post("/preview-threshold")
+async def preview_threshold(
+    file: UploadFile = File(...),
+    threshold: int = Form(200),
+    remove_whitespace: str = Form(None),
+):
+    import io
+    from fastapi.responses import StreamingResponse
+    from PIL import Image, ImageOps
+
+    data = await file.read()
+    img = Image.open(io.BytesIO(data)).convert("RGBA")
+
+    if remove_whitespace:
+        alpha = img.getchannel("A")
+        bbox = alpha.getbbox()
+        if bbox:
+            img = img.crop(bbox)
+
+    background = Image.new("RGBA", img.size, (255, 255, 255, 255))
+    background.alpha_composite(img)
+
+    gray = background.convert("L")
+    gray = ImageOps.autocontrast(gray)
+    bw = gray.point(lambda p: 0 if p < threshold else 255, mode="L")
+
+    buf = io.BytesIO()
+    bw.save(buf, format="PNG")
+    buf.seek(0)
+
+    return StreamingResponse(buf, media_type="image/png")
+
 # =========================
 # Stripe
 # =========================
