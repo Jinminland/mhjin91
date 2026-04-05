@@ -117,14 +117,14 @@
 
 
                     <div class="form-group">
-                        <label for="threshold-range">Threshold Preview: <span id="threshold-value">200</span></label>
+                        <label for="threshold">Threshold</label>
                         <input
-                            type="range"
-                            id="threshold-range"
-                            min="80"
-                            max="250"
+                            type="number"
+                            id="threshold"
+                            name="threshold"
+                            min="0"
+                            max="255"
                             value="200"
-                            step="1"
                         />
                     </div>
 
@@ -258,13 +258,6 @@
                         </div>
 
                         <div class="preview-stage">
-                            <img
-                                id="threshold-preview-img"
-                                class="preview-box large-preview"
-                                style="display:none; max-width:100%;"
-                                alt="Threshold preview"
-                            />
-
                             <div id="main-preview" class="preview-box large-preview">
                                 {% if results and results[0] %}
                                     {{ results[0].svg | safe }}
@@ -425,9 +418,6 @@
     const previewBox = document.getElementById("main-preview");
     const previewFileName = document.getElementById("preview-file-name");
     const colorButtons = document.querySelectorAll(".color-btn");
-    const thresholdRange = document.getElementById("threshold-range");
-    const thresholdValue = document.getElementById("threshold-value");
-    const thresholdPreviewImg = document.getElementById("threshold-preview-img");
     const removeWhitespaceCheckbox = document.querySelector('input[name="remove_whitespace"]');
 
     let currentColor = "#000000";
@@ -491,14 +481,12 @@
 
         syncFileInputWithSelectedFiles();
         renderSelectedFiles();
-        updateThresholdPreview();
     }
 
     function removeSelectedUploadFile(index) {
         selectedUploadFiles.splice(index, 1);
         syncFileInputWithSelectedFiles();
         renderSelectedFiles();
-        updateThresholdPreview();
     }
 
     window.removeSelectedUploadFile = removeSelectedUploadFile;
@@ -548,72 +536,10 @@
         return active ? active.dataset.svg : "";
     }
 
-    function getCurrentUploadFile() {
-        if (!selectedUploadFiles.length) return null;
-        return selectedUploadFiles[0];
-    }
-
-    async function updateThresholdPreview() {
-        if (!thresholdRange || !thresholdPreviewImg || !previewBox) return;
-
-        const currentFile = getCurrentUploadFile();
-        if (!currentFile) {
-            thresholdPreviewImg.style.display = "none";
-            previewBox.style.display = "block";
-            renderPreview();
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append("file", currentFile);
-        formData.append("threshold", thresholdRange.value);
-
-        if (removeWhitespaceCheckbox && removeWhitespaceCheckbox.checked) {
-            formData.append("remove_whitespace", "on");
-        }
-
-        try {
-            const response = await fetch("/preview-threshold", {
-                method: "POST",
-                body: formData
-            });
-
-            if (!response.ok) {
-                thresholdPreviewImg.style.display = "none";
-                previewBox.style.display = "block";
-                renderPreview();
-                return;
-            }
-
-            const blob = await response.blob();
-            const url = URL.createObjectURL(blob);
-
-            thresholdPreviewImg.src = url;
-            thresholdPreviewImg.style.display = "block";
-            previewBox.style.display = "none";
-        } catch (error) {
-            thresholdPreviewImg.style.display = "none";
-            previewBox.style.display = "block";
-            renderPreview();
-        }
-    }
-
-    function resetToSvgPreview() {
-        if (!thresholdPreviewImg || !previewBox) return;
-        thresholdPreviewImg.style.display = "none";
-        previewBox.style.display = "block";
-        renderPreview();
-    }
-
-
     function renderPreview() {
         if (!previewBox) return;
         const svg = getCurrentSvg();
         previewBox.innerHTML = svg ? updateSvgFill(svg, currentColor) : "";
-
-        if (thresholdRange && thresholdRange.value !== "200") {
-            updateThresholdPreview();
-        }
     }
 
     function bindFileRowEvents() {
@@ -657,28 +583,6 @@
             renderPreview();
         });
     });
-
-    if (thresholdRange) {
-        thresholdRange.addEventListener("input", () => {
-            if (thresholdValue) {
-                thresholdValue.textContent = thresholdRange.value;
-            }
-
-            if (thresholdRange.value === "200") {
-                resetToSvgPreview();
-            } else {
-                updateThresholdPreview();
-            }
-        });
-    }
-
-    if (removeWhitespaceCheckbox) {
-        removeWhitespaceCheckbox.addEventListener("change", () => {
-            if (thresholdRange && thresholdRange.value !== "200") {
-                updateThresholdPreview();
-            }
-        });
-    }
 
 
     function downloadSVG(svgText, filename = "converted.svg") {

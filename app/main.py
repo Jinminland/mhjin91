@@ -356,6 +356,7 @@ async def convert_images(
     files: list[UploadFile] = File(...),
     remove_whitespace: str = Form(None),
     compress_more: str = Form(None),
+    threshold: int = Form(200),
     access_token: str = Form(""),
 ):
     try:
@@ -412,6 +413,7 @@ async def convert_images(
                 file.filename,
                 remove_whitespace=bool(remove_whitespace),
                 compress_more=bool(compress_more),
+                threshold=threshold,
             )
 
             results.append({

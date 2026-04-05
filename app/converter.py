@@ -93,6 +93,7 @@ def image_to_svg(
     fill_color: str = "black",
     remove_whitespace: bool = False,
     compress_more: bool = False,
+    threshold: int = 200,
 ) -> tuple[str, float]:
     potrace_path = get_potrace_path()
 
@@ -113,7 +114,7 @@ def image_to_svg(
             bw = prepare_bw_image(
                 img=original_img,
                 remove_whitespace=remove_whitespace,
-                threshold=200,
+                threshold=threshold,
                 scale=1.0,
             )
             bw.save(bmp_path)
@@ -134,17 +135,15 @@ def image_to_svg(
         # 압축 모드: 150KB 이하 강제 시도
         # -------------------------
         attempts = [
-            {"scale": 1.00, "threshold": 200, "opttolerance": "0.1", "turdsize": "1"},
-            {"scale": 1.00, "threshold": 200, "opttolerance": "0.1", "turdsize": "2"},
-            {"scale": 1.00, "threshold": 200, "opttolerance": "0.2", "turdsize": "4"},
-            {"scale": 1.00, "threshold": 210, "opttolerance": "0.3", "turdsize": "6"},
-            {"scale": 0.90, "threshold": 210, "opttolerance": "0.5", "turdsize": "8"},
-            {"scale": 0.80, "threshold": 220, "opttolerance": "0.7", "turdsize": "10"},
-            {"scale": 0.70, "threshold": 225, "opttolerance": "1.0", "turdsize": "12"},
-            {"scale": 0.60, "threshold": 230, "opttolerance": "1.5", "turdsize": "14"},
-            {"scale": 0.50, "threshold": 235, "opttolerance": "2.0", "turdsize": "16"},
-            {"scale": 0.40, "threshold": 240, "opttolerance": "2.5", "turdsize": "20"},
-            {"scale": 0.30, "threshold": 245, "opttolerance": "3.0", "turdsize": "24"},
+            {"scale": 1.00, "threshold": threshold, "opttolerance": "0.1", "turdsize": "1"},
+            {"scale": 1.00, "threshold": threshold, "opttolerance": "0.1", "turdsize": "2"},
+            {"scale": 1.00, "threshold": min(threshold + 5, 255), "opttolerance": "0.2", "turdsize": "4"},
+            {"scale": 1.00, "threshold": min(threshold + 10, 255), "opttolerance": "0.3", "turdsize": "6"},
+            {"scale": 0.90, "threshold": min(threshold + 10, 255), "opttolerance": "0.5", "turdsize": "8"},
+            {"scale": 0.80, "threshold": min(threshold + 20, 255), "opttolerance": "0.7", "turdsize": "10"},
+            {"scale": 0.70, "threshold": min(threshold + 25, 255), "opttolerance": "1.0", "turdsize": "12"},
+            {"scale": 0.60, "threshold": min(threshold + 30, 255), "opttolerance": "1.5", "turdsize": "14"},
+            {"scale": 0.50, "threshold": min(threshold + 35, 255), "opttolerance": "2.0", "turdsize": "16"},
         ]
 
         best_svg = None
