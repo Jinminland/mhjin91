@@ -1,8 +1,10 @@
 import os
+import io
 import shutil
 import subprocess
 import tempfile
 from PIL import Image, ImageOps
+import cairosvg
 
 
 MAX_SVG_KB = 150
@@ -51,6 +53,25 @@ def run_potrace(
 
 def get_svg_size_kb(svg_content: str) -> float:
     return len(svg_content.encode("utf-8")) / 1024
+
+
+def load_image_any_format(
+    input_path: str,
+    file_bytes: bytes,
+    original_filename: str,
+) -> Image.Image:
+    ext = os.path.splitext(original_filename)[1].lower()
+
+    # SVG 파일이면 먼저 PNG로 렌더링 후 Pillow로 열기
+    if ext == ".svg":
+        try:
+            png_bytes = cairosvg.svg2png(bytestring=file_bytes)
+            return Image.open(io.BytesIO(png_bytes)).convert("RGBA")
+        except Exception as e:
+            raise RuntimeError(f"SVG 파일을 열 수 없습니다: {e}")
+
+    # 일반 이미지 파일은 기존 방식 유지
+    return Image.open(input_path).convert("RGBA")
 
 
 def prepare_bw_image(
@@ -105,7 +126,11 @@ def image_to_svg(
         with open(input_path, "wb") as f:
             f.write(file_bytes)
 
-        original_img = Image.open(input_path).convert("RGBA")
+        original_img = load_image_any_format(
+            input_path=input_path,
+            file_bytes=file_bytes,
+            original_filename=original_filename,
+        )
 
         # -------------------------
         # 기본 모드: 그냥 1회 변환
